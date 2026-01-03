@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { Users, Clock, Calendar, LogOut } from 'lucide-react';
 import { AvatarWithBadge } from '../Avatar';
 import { useAuth } from '@/contexts/AuthContext';
-import dayflowLogo from '@/assets/dayflow-logo.png';
+import dayflowLogo from '../../assets/dayflow-logo.png';
 
 const navItems = [
   { to: '/employees', icon: Users, label: 'Employees' },

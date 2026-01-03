@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'accounts',
     'attendance',
+    'leave',
+    'dashboard',
 ]
 
 
