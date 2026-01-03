@@ -1,5 +1,7 @@
 from django.db import models
-from accounts.models import CustomUser
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class LeaveRequest(models.Model):
     LEAVE_TYPE_CHOICES = (
@@ -14,7 +16,13 @@ class LeaveRequest(models.Model):
         ("REJECTED", "Rejected"),
     )
 
-    CustomUser = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        null=True,       
+        blank=True        
+    )
+
     leave_type = models.CharField(max_length=10, choices=LEAVE_TYPE_CHOICES)
     start_date = models.DateField()
     end_date = models.DateField()
@@ -26,4 +34,4 @@ class LeaveRequest(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.user.login_id} ({self.start_date} → {self.end_date})"
+        return f"{self.user} ({self.start_date} → {self.end_date})"

@@ -10,7 +10,9 @@ export const login = async (loginId, password) => {
   });
 
   if (!response.ok) {
-    throw new Error("Login failed");
+    const errorData = await response.json();
+    const errorMessage = Object.values(errorData).flat().join(' ');
+    throw new Error(errorMessage || "Login failed");
   }
 
   return response.json();
@@ -26,8 +28,11 @@ export const signup = async (userData) => {
   });
 
   if (!response.ok) {
-    throw new Error("Signup failed");
+    const errorData = await response.json();
+    const errorMessage = Object.values(errorData).flat().join(' ');
+    throw new Error(errorMessage || "Signup failed");
   }
 
   return response.json();
 };
+
