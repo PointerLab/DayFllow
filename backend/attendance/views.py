@@ -1,0 +1,88 @@
+from django.shortcuts import render
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework import status
+from django.utils import timezone
+from datetime import date
+
+from .models import Attendance
+from .utils import calculate_status
+from .serializers import AttendanceSerializer
+
+class CheckInAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        today = date.today()
+
+        attendance, created = Attendance.objects.get_or_create(
+            user=request.user,
+            date=today,
+            defaults={"status": "ABSENT"},
+        )
+
+        if attendance.check_in:
+            return Response(
+                {"detail": "Already checked in"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        attendance.check_in = timezone.now()
+        attendance.save()
+
+        return Response({"detail": "Check-in successful"})
+
+class CheckOutAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        today = date.today()
+
+        try:
+            attendance = Attendance.objects.get(
+                user=request.user,
+                date=today
+            )
+        except Attendance.DoesNotExist:
+            return Response(
+                {"detail": "No check-in found"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if attendance.check_out:
+            return Response(
+                {"detail": "Already checked out"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        attendance.check_out = timezone.now()
+
+        delta = attendance.check_out - attendance.check_in
+        attendance.total_hours = round(delta.total_seconds() / 3600, 2)
+        attendance.status = calculate_status(attendance.total_hours)
+        attendance.save()
+
+        return Response({"detail": "Check-out successful"})
+
+class MyAttendanceAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        records = Attendance.objects.filter(user=request.user)
+        serializer = AttendanceSerializer(records, many=True)
+        return Response(serializer.data)
+
+class AllAttendanceAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role not in ["ADMIN", "HR"]:
+            return Response(
+                {"detail": "Permission denied"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        records = Attendance.objects.all()
+        serializer = AttendanceSerializer(records, many=True)
+        return Response(serializer.data)
