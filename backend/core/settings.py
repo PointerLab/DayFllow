@@ -47,7 +47,7 @@ INSTALLED_APPS = [
 ]
 
 
-AUTH_USER_MODEL = 'accounts.User'
+AUTH_USER_MODEL = 'accounts.CustomUser'
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
@@ -91,7 +91,7 @@ DATABASES = {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": "dayflow_db",
         "USER": "dayflow_user",
-        "PASSWORD": "dayflow123",
+        "PASSWORD": "dayflow@123",
         "HOST": "localhost",
         "PORT": "5432",
     }

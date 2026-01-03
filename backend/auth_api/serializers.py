@@ -1,8 +1,7 @@
 from django.contrib.auth import authenticate
 from rest_framework import serializers
-from accounts.models import User
 from django.contrib.auth.password_validation import validate_password
-from accounts.models import User
+from accounts.models import CustomUser
 from accounts.utils import generate_login_id, generate_temp_password
 from django.contrib.auth.hashers import make_password
 
@@ -49,7 +48,7 @@ class CreateEmployeeSerializer(serializers.Serializer):
 
         temp_password = generate_temp_password()
 
-        user = User.objects.create(
+        user = CustomUser.objects.create(
             login_id=login_id,
             email=validated_data["email"],
             first_name=validated_data["first_name"],

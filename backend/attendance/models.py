@@ -1,5 +1,5 @@
 from django.db import models
-from accounts.models import User
+from accounts.models import CustomUser
 
 class Attendance(models.Model):
     STATUS_CHOICES = (
@@ -9,7 +9,7 @@ class Attendance(models.Model):
         ("LEAVE", "Leave"),
     )
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     date = models.DateField()
     check_in = models.DateTimeField(null=True, blank=True)
     check_out = models.DateTimeField(null=True, blank=True)

@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { AuthLayout } from '@/components/auth/AuthLayout';
-import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import dayflowLogo from '@/assets/dayflow-logo.png';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Login: React.FC = () => {
-  const [email, setEmail] = useState('');
+  const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
@@ -21,24 +21,16 @@ const Login: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const success = await login(email, password);
-      if (success) {
-        toast({
-          title: 'Welcome back!',
-          description: 'You have successfully logged in.',
-        });
-        navigate('/employees');
-      } else {
-        toast({
-          title: 'Login failed',
-          description: 'Invalid email or password. Password must be at least 8 characters.',
-          variant: 'destructive',
-        });
-      }
+      await login(loginId, password);
+      toast({
+        title: 'Welcome back!',
+        description: 'You have successfully logged in.',
+      });
+      navigate('/employees');
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'An error occurred. Please try again.',
+        title: 'Login failed',
+        description: 'Invalid email or password. Password must be at least 8 characters.',
         variant: 'destructive',
       });
     } finally {
@@ -72,8 +64,8 @@ const Login: React.FC = () => {
             </label>
             <input
               type="text"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={loginId}
+              onChange={(e) => setLoginId(e.target.value)}
               placeholder="you@company.com or EMP001"
               className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               required
