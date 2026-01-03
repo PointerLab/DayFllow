@@ -1,5 +1,5 @@
 from django.db import models
-from accounts.models import User
+from accounts.models import CustomUser
 
 class LeaveRequest(models.Model):
     LEAVE_TYPE_CHOICES = (
@@ -14,7 +14,7 @@ class LeaveRequest(models.Model):
         ("REJECTED", "Rejected"),
     )
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    CustomUser = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     leave_type = models.CharField(max_length=10, choices=LEAVE_TYPE_CHOICES)
     start_date = models.DateField()
     end_date = models.DateField()
