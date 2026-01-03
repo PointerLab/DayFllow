@@ -1,0 +1,220 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Dayflow Color Palette - HSL */
+    --background: 0 0% 96%; /* #F5F5F5 */
+    --foreground: 300 56% 19%; /* #4B164C */
+
+    --card: 0 0% 100%; /* #FFFFFF */
+    --card-foreground: 300 56% 19%; /* #4B164C */
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 300 56% 19%;
+
+    --primary: 307 55% 70%; /* #DD88CF */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 307 60% 94%; /* #F8E7F6 */
+    --secondary-foreground: 300 56% 19%;
+
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+
+    --accent: 307 60% 94%; /* #F8E7F6 */
+    --accent-foreground: 300 56% 19%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 307 55% 70%;
+
+    --radius: 0.75rem;
+
+    /* Custom Dayflow Colors */
+    --orchid: 307 55% 70%;
+    --orchid-dark: 307 50% 60%;
+    --deep-purple: 300 56% 19%;
+    --lavender: 307 60% 94%;
+    --light-grey: 0 0% 96%;
+
+    /* Status Colors */
+    --success-bg: 151 81% 96%; /* #ECFDF3 */
+    --success-text: 142 64% 24%; /* #15803D */
+    --warning-bg: 48 96% 89%; /* #FEF3C7 */
+    --warning-text: 32 95% 37%; /* #B45309 */
+    --info-bg: 214 95% 93%; /* #DBEAFE */
+    --info-text: 221 83% 40%; /* #1E40AF */
+    --error-bg: 0 86% 97%;
+    --error-text: 0 72% 51%;
+
+    /* Sidebar */
+    --sidebar-background: 300 56% 19%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 307 55% 70%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 307 45% 30%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 300 40% 25%;
+    --sidebar-ring: 307 55% 70%;
+  }
+
+  .dark {
+    --background: 300 56% 8%;
+    --foreground: 0 0% 95%;
+    --card: 300 56% 12%;
+    --card-foreground: 0 0% 95%;
+    --popover: 300 56% 12%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 307 55% 70%;
+    --primary-foreground: 300 56% 19%;
+    --secondary: 300 40% 20%;
+    --secondary-foreground: 0 0% 95%;
+    --muted: 300 40% 20%;
+    --muted-foreground: 300 20% 60%;
+    --accent: 300 40% 20%;
+    --accent-foreground: 0 0% 95%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 95%;
+    --border: 300 40% 25%;
+    --input: 300 40% 25%;
+    --ring: 307 55% 70%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold text-foreground;
+  }
+}
+
+@layer components {
+  /* Pill Badge Styles */
+  .status-present {
+    @apply bg-success text-success-foreground;
+  }
+
+  .status-absent {
+    @apply bg-warning text-warning-foreground;
+  }
+
+  .status-leave {
+    @apply bg-info text-info-foreground;
+  }
+
+  .status-pending {
+    @apply bg-warning text-warning-foreground;
+  }
+
+  .status-approved {
+    @apply bg-success text-success-foreground;
+  }
+
+  .status-rejected {
+    @apply bg-error text-error-foreground;
+  }
+
+  /* Floating Animation */
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-20px);
+    }
+  }
+
+  @keyframes float-delayed {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-15px);
+    }
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% {
+      box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
+    }
+    50% {
+      box-shadow: 0 0 40px hsl(var(--primary) / 0.5);
+    }
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-float-delayed {
+    animation: float-delayed 8s ease-in-out infinite;
+    animation-delay: 2s;
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 3s ease-in-out infinite;
+  }
+
+  /* Wave Divider */
+  .wave-divider {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    line-height: 0;
+  }
+
+  /* Glass Effect */
+  .glass {
+    @apply bg-white/80 backdrop-blur-sm;
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-muted;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-primary/50 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .gradient-primary {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--deep-purple)) 100%);
+  }
+
+  .gradient-hero {
+    background: linear-gradient(180deg, hsl(var(--primary)) 0%, hsl(var(--deep-purple)) 100%);
+  }
+
+  .gradient-card {
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.1) 0%, hsl(var(--secondary)) 100%);
+  }
+}
