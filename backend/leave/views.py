@@ -85,4 +85,32 @@ class ApproveRejectLeaveAPIView(APIView):
 
         return Response({"message": f"Leave {leave.status.lower()} successfully"})
 
+class ApplyLeaveAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = LeaveRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        start = serializer.validated_data["start_date"]
+        end = serializer.validated_data["end_date"]
+
+        overlap = LeaveRequest.objects.filter(
+            user=request.user,
+            start_date__lte=end,
+            end_date__gte=start,
+            status__in=["PENDING", "APPROVED"]
+        ).exists()
+
+        if overlap:
+            return Response(
+                {"detail": "Overlapping leave already exists"},
+                status=400
+            )
+
+        leave = serializer.save(user=request.user)
+        return Response(
+            {"message": "Leave applied successfully"},
+            status=201
+        )
 

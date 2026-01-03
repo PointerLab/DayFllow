@@ -9,6 +9,9 @@ from datetime import date
 from .models import Attendance
 from .utils import calculate_status
 from .serializers import AttendanceSerializer
+from leave.models import LeaveRequest
+from datetime import date
+
 
 class CheckInAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -86,3 +89,40 @@ class AllAttendanceAPIView(APIView):
         records = Attendance.objects.all()
         serializer = AttendanceSerializer(records, many=True)
         return Response(serializer.data)
+
+class CheckInAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        today = date.today()
+
+        # 🚫 BLOCK CHECK-IN IF LEAVE APPROVED
+        on_leave = LeaveRequest.objects.filter(
+            user=request.user,
+            status="APPROVED",
+            start_date__lte=today,
+            end_date__gte=today
+        ).exists()
+
+        if on_leave:
+            return Response(
+                {"detail": "You are on approved leave today"},
+                status=400
+            )
+
+        attendance, created = Attendance.objects.get_or_create(
+            user=request.user,
+            date=today,
+            defaults={"status": "ABSENT"},
+        )
+
+        if attendance.check_in:
+            return Response(
+                {"detail": "Already checked in"},
+                status=400
+            )
+
+        attendance.check_in = timezone.now()
+        attendance.save()
+
+        return Response({"detail": "Check-in successful"})
