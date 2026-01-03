@@ -273,31 +273,7 @@ const Signup: React.FC = () => {
             </p>
           </div>
 
-          {/* Employee ID */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Employee ID
-            </label>
-            <input
-              type="text"
-              value={employeeId}
-              onChange={(e) => handleEmployeeIdChange(e.target.value)}
-              onBlur={handleEmployeeIdBlur}
-              placeholder="OIJODO20220001"
-              maxLength={14}
-              className={`w-full px-4 py-3 rounded-xl border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all ${
-                employeeIdError ? 'border-destructive' : 'border-input'
-              }`}
-              required
-            />
-            {employeeIdError ? (
-              <p className="text-xs text-destructive mt-1.5">{employeeIdError}</p>
-            ) : (
-              <p className="text-xs text-muted-foreground mt-1.5">
-                Enter the Employee ID provided by your HR department
-              </p>
-            )}
-          </div>
+ 
 
           {/* Password */}
           <div>
