@@ -7,6 +7,7 @@ from django.db.models import Count
 
 from attendance.models import Attendance
 from leave.models import LeaveRequest
+from accounts.models import CustomUser
 
 class EmployeeDashboardAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -37,8 +38,6 @@ class EmployeeDashboardAPIView(APIView):
 
         return Response(data)
 
-from accounts.models import User
-
 class AdminDashboardAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -52,7 +51,7 @@ class AdminDashboardAPIView(APIView):
         today = date.today()
 
         data = {
-            "total_employees": User.objects.filter(role="EMP").count(),
+            "total_employees": CustomUser.objects.filter(role="EMP").count(),
             "present_today": Attendance.objects.filter(
                 date=today, status="PRESENT"
             ).count(),
