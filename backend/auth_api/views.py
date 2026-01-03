@@ -70,25 +70,4 @@ class CreateEmployeeAPIView(APIView):
             "message": "Employee created successfully"
         }, status=status.HTTP_201_CREATED)
 
-class CreateEmployeeAPIView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request):
-        if request.user.role not in ["ADMIN", "HR"]:
-            return Response(
-                {"detail": "Permission denied"},
-                status=status.HTTP_403_FORBIDDEN
-            )
-
-        serializer = CreateEmployeeSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        user, temp_password = serializer.save()
-
-        return Response({
-            "login_id": user.login_id,
-            "temporary_password": temp_password,
-            "message": "Employee created successfully"
-        }, status=status.HTTP_201_CREATED)
-
 

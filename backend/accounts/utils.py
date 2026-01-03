@@ -1,5 +1,5 @@
 from datetime import date
-from accounts.models import User
+from accounts.models import CustomUser
 import random 
 import string
 
