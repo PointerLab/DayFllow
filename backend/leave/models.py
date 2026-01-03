@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
+from django.conf import settings
 
 User = get_user_model()
 
@@ -17,7 +18,7 @@ class LeaveRequest(models.Model):
     )
 
     user = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         null=True,       
         blank=True        
