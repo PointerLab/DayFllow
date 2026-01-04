@@ -64,7 +64,7 @@ const Signup: React.FC = () => {
         email: email,
       });
       if (user?.role === 'ADMIN') {
-        navigate('/AdminProfile');
+        navigate('/profile/admin');
       } else if (user?.role === 'EMP') {
         navigate('/profile/employee');
       } else {
