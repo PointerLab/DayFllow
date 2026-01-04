@@ -16,7 +16,7 @@ const Signup: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { signup } = useAuth();
+  const { signup, login } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -44,7 +44,9 @@ const Signup: React.FC = () => {
     setIsLoading(true);
 
     try {
-      await signup({
+      // Debug: Check what is being sent to the backend
+      console.log('Sending signup data:', { first_name: firstName, last_name: lastName, email });
+      const res = await signup({
         first_name: firstName,
         last_name: lastName,
         email,
@@ -52,13 +54,27 @@ const Signup: React.FC = () => {
       });
       toast({
         title: 'Account created!',
-        description: 'Welcome to Dayflow. Please login to continue.',
+        description: 'Welcome to Dayflow. Signing you in now...',
       });
-      navigate('/login');
-    } catch (error) {
+
+      // Auto-login so the user is authenticated and sees their entered details
+      const user = await login(email, password, {
+        first_name: firstName,
+        last_name: lastName,
+        email: email,
+      });
+      if (user?.role === 'ADMIN') {
+        navigate('/profile/admin');
+      } else if (user?.role === 'EMP') {
+        navigate('/profile/employee');
+      } else {
+        navigate('/login');
+      }
+    } catch (error: any) {
+      const message = error?.message || 'An error occurred. Please try again.';
       toast({
         title: 'Error',
-        description: 'An error occurred. Please try again.',
+        description: message,
         variant: 'destructive',
       });
     } finally {
@@ -88,31 +104,35 @@ const Signup: React.FC = () => {
           <div className="flex gap-4">
             {/* First Name */}
             <div className="w-1/2">
-              <label className="block text-sm font-medium text-foreground mb-2">
+              <label htmlFor="firstName" className="block text-sm font-medium text-foreground mb-2">
                 First Name
               </label>
               <input
+                id="firstName"
                 type="text"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 placeholder="John"
                 className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                 required
+                autoComplete="given-name"
               />
             </div>
 
             {/* Last Name */}
             <div className="w-1/2">
-              <label className="block text-sm font-medium text-foreground mb-2">
+              <label htmlFor="lastName" className="block text-sm font-medium text-foreground mb-2">
                 Last Name
               </label>
               <input
+                id="lastName"
                 type="text"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 placeholder="Doe"
                 className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                 required
+                autoComplete="family-name"
               />
             </div>
           </div>
@@ -120,26 +140,29 @@ const Signup: React.FC = () => {
 
           {/* Work Email */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
+            <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
               Work Email
             </label>
             <input
+              id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@company.com"
               className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               required
+              autoComplete="email"
             />
           </div>
 
           {/* Password */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
+            <label htmlFor="password" className="block text-sm font-medium text-foreground mb-2">
               Password
             </label>
             <div className="relative">
               <input
+                id="password"
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -147,11 +170,13 @@ const Signup: React.FC = () => {
                 className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all pr-12"
                 required
                 minLength={8}
+                autoComplete="new-password"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
@@ -161,22 +186,25 @@ const Signup: React.FC = () => {
 
           {/* Confirm Password */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-foreground mb-2">
               Confirm Password
             </label>
             <div className="relative">
               <input
+                id="confirmPassword"
                 type={showConfirmPassword ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirm your password"
                 className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all pr-12"
                 required
+                autoComplete="new-password"
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
+                aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
               >
                 {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
