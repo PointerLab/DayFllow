@@ -18,10 +18,9 @@ class UserRegistrationView(generics.CreateAPIView):
             serializer.is_valid(raise_exception=True)
             user = serializer.save()
 
-            if is_first_user:
-                user.role = "ADMIN"
-                user.is_staff = True
-                user.save()
+            user.role = "ADMIN"
+            user.is_staff = True
+            user.save()
         except Exception as e:
             # In development return the exception message and traceback to help debugging
             tb = traceback.format_exc()

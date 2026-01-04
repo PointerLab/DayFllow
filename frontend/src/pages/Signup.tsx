@@ -58,7 +58,11 @@ const Signup: React.FC = () => {
       });
 
       // Auto-login so the user is authenticated and sees their entered details
-      const user = await login(email, password);
+      const user = await login(email, password, {
+        first_name: firstName,
+        last_name: lastName,
+        email: email,
+      });
       if (user?.role === 'ADMIN') {
         navigate('/AdminProfile');
       } else if (user?.role === 'EMP') {

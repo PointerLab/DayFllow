@@ -2,6 +2,9 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { login as apiLogin, signup as apiSignup } from '@/api/auth';
 
 interface User {
+  first_name: string;
+  last_name: string;
+  email: string;
   role: 'ADMIN' | 'HR' | 'EMP';
   login_id: string;
 }
@@ -9,7 +12,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
-  login: (loginId: string, password: string) => Promise<void>;
+  login: (loginId: string, password: string, userDetails?: Partial<User>) => Promise<User>;
   signup: (userData: object) => Promise<any>;
   logout: () => void;
 }
@@ -26,9 +29,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
-  const login = async (loginId: string, password: string) => {
+  const login = async (loginId: string, password: string, userDetails?: Partial<User>) => {
     const data = await apiLogin(loginId, password);
-    const userData = { role: data.role, login_id: data.login_id };
+    const userData: User = {
+      role: data.role,
+      login_id: data.login_id,
+      // Sensible defaults if not provided
+      first_name: userDetails?.first_name || '',
+      last_name: userDetails?.last_name || '',
+      email: userDetails?.email || loginId,
+    };
     setUser(userData);
     localStorage.setItem('dayflow_user', JSON.stringify(userData));
     localStorage.setItem('dayflow_auth_tokens', JSON.stringify({ access: data.access, refresh: data.refresh }));
