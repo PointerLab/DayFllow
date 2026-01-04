@@ -32,6 +32,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setUser(userData);
     localStorage.setItem('dayflow_user', JSON.stringify(userData));
     localStorage.setItem('dayflow_auth_tokens', JSON.stringify({ access: data.access, refresh: data.refresh }));
+    return userData;
   };
 
   const signup = async (userData: object) => {
