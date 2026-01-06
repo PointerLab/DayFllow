@@ -1,8 +1,13 @@
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
 const AdminProfile: React.FC = () => {
-  const { user } = useAuth();
+  const { user: authUser } = useAuth();
+  const location = useLocation();
+
+  // Combine auth user with location state for immediate feedback after signup
+  const user = location.state || authUser;
 
   return (
     <div className="container mx-auto p-4">
@@ -11,8 +16,8 @@ const AdminProfile: React.FC = () => {
         <div>
           <p><strong>Name:</strong> {user.first_name} {user.last_name}</p>
           <p><strong>Email:</strong> {user.email}</p>
-          <p><strong>Username:</strong> {user.username}</p>
-          <p><strong>Role:</strong> {user.role}</p>
+          {user.username && <p><strong>Username:</strong> {user.username}</p>}
+          {user.role && <p><strong>Role:</strong> {user.role}</p>}
         </div>
       ) : (
         <p>Loading user data...</p>
