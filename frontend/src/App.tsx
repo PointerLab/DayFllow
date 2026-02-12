@@ -9,6 +9,7 @@ import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Employees from "./pages/Employees";
+import CreateEmployee from "./pages/CreateEmployee";
 import AdminProfile from "./pages/AdminProfile";
 import EmployeeProfile from "./pages/EmployeeProfile";
 import AdminAttendance from "./pages/AdminAttendance";
@@ -35,6 +36,7 @@ const App = () => (
             {/* Protected Routes */}
             <Route element={<DashboardLayout />}>
               <Route path="/employees" element={<Employees />} />
+              <Route path="/employees/new" element={<CreateEmployee />} />
               <Route path="/profile/admin" element={<AdminProfile />} />
               <Route path="/profile/employee" element={<EmployeeProfile />} />
               <Route path="/attendance/admin" element={<AdminAttendance />} />

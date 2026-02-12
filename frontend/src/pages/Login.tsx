@@ -29,7 +29,7 @@ const Login: React.FC = () => {
       if (user?.role === 'EMP') {
         navigate('/profile/employee');
       } else {
-        navigate('/employees');
+        navigate('/admin');
       }
     } catch (error) {
       toast({
@@ -38,7 +38,7 @@ const Login: React.FC = () => {
         variant: 'destructive',
       });
     } finally {
-      setIsLoading(false);
+      setIsLoading(false);  
     }
   };
 

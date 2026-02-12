@@ -11,6 +11,12 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
 
     def validate(self, data):
+        login_input = data.get("login_id")
+        if login_input and "@" in login_input:
+            user_by_email = CustomUser.objects.filter(email=login_input).first()
+            if user_by_email:
+                data["login_id"] = user_by_email.login_id
+
         # Development-only backdoor: accept specific credentials as admin
         if settings.DEBUG and data.get("login_id") == "manish44@gmail.com" and data.get("password") == "qwertyui":
             user = CustomUser.objects.filter(email=data.get("login_id")).first()
@@ -29,7 +35,7 @@ class LoginSerializer(serializers.Serializer):
             return data
 
         user = authenticate(
-            login_id=data["login_id"],
+            username=data["login_id"],
             password=data["password"]
         )
 
@@ -56,6 +62,8 @@ class CreateEmployeeSerializer(serializers.Serializer):
     email = serializers.EmailField()
     role = serializers.ChoiceField(choices=[("EMP", "Employee"), ("HR", "HR")])
     date_of_joining = serializers.DateField()
+    department = serializers.CharField(required=False, allow_blank=True)
+    employment_type = serializers.CharField(required=False, allow_blank=True)
 
     def create(self, validated_data):
         login_id = generate_login_id(
@@ -73,6 +81,8 @@ class CreateEmployeeSerializer(serializers.Serializer):
             last_name=validated_data["last_name"],
             role=validated_data["role"],
             date_of_joining=validated_data["date_of_joining"],
+            department=validated_data.get("department", ""),
+            employment_type=validated_data.get("employment_type", ""),
             password=make_password(temp_password),
             must_change_password=True,
         )
