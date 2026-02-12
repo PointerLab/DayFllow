@@ -8,7 +8,7 @@ from datetime import date
 
 from .models import Attendance
 from .utils import calculate_status
-from .serializers import AttendanceSerializer
+from .serializers import AttendanceSerializer, AttendanceListSerializer
 from leave.models import LeaveRequest
 from datetime import date
 
@@ -87,7 +87,7 @@ class AllAttendanceAPIView(APIView):
             )
 
         records = Attendance.objects.all()
-        serializer = AttendanceSerializer(records, many=True)
+        serializer = AttendanceListSerializer(records, many=True)
         return Response(serializer.data)
 
 class CheckInAPIView(APIView):

@@ -1,7 +1,8 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
-from .serializers import UserRegistrationSerializer
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.exceptions import PermissionDenied
+from .serializers import UserRegistrationSerializer, EmployeeListSerializer
 from .models import CustomUser
 import traceback
 
@@ -38,3 +39,13 @@ class UserRegistrationView(generics.CreateAPIView):
             status=status.HTTP_201_CREATED,
         )
 
+
+class EmployeeListAPIView(generics.ListAPIView):
+    serializer_class = EmployeeListSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role not in ["ADMIN", "HR"]:
+            raise PermissionDenied("Permission denied")
+        return CustomUser.objects.all().order_by("date_of_joining", "id")

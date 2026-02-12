@@ -32,3 +32,18 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             role=role if role else 'EMP',
         )
         return user
+
+
+class EmployeeListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = (
+            "id",
+            "login_id",
+            "email",
+            "first_name",
+            "last_name",
+            "role",
+            "date_of_joining",
+            "is_active",
+        )
