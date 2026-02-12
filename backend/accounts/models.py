@@ -50,6 +50,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default="EMP")
     date_of_joining = models.DateField(default=date.today)
+    department = models.CharField(max_length=100, blank=True, default="")
+    employment_type = models.CharField(max_length=50, blank=True, default="")
 
     must_change_password = models.BooleanField(default=False)
 

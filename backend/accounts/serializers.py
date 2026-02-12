@@ -8,7 +8,15 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ('email', 'password', 'first_name', 'last_name', 'role')
+        fields = (
+            'email',
+            'password',
+            'first_name',
+            'last_name',
+            'role',
+            'department',
+            'employment_type',
+        )
 
     def create(self, validated_data):
         role = validated_data.pop('role', None)
@@ -30,6 +38,8 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             first_name=validated_data.get('first_name', ''),
             last_name=validated_data.get('last_name', ''),
             role=role if role else 'EMP',
+            department=validated_data.get('department', ''),
+            employment_type=validated_data.get('employment_type', ''),
         )
         return user
 
@@ -45,5 +55,7 @@ class EmployeeListSerializer(serializers.ModelSerializer):
             "last_name",
             "role",
             "date_of_joining",
+            "department",
+            "employment_type",
             "is_active",
         )

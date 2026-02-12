@@ -56,6 +56,8 @@ class CreateEmployeeSerializer(serializers.Serializer):
     email = serializers.EmailField()
     role = serializers.ChoiceField(choices=[("EMP", "Employee"), ("HR", "HR")])
     date_of_joining = serializers.DateField()
+    department = serializers.CharField(required=False, allow_blank=True)
+    employment_type = serializers.CharField(required=False, allow_blank=True)
 
     def create(self, validated_data):
         login_id = generate_login_id(
@@ -73,6 +75,8 @@ class CreateEmployeeSerializer(serializers.Serializer):
             last_name=validated_data["last_name"],
             role=validated_data["role"],
             date_of_joining=validated_data["date_of_joining"],
+            department=validated_data.get("department", ""),
+            employment_type=validated_data.get("employment_type", ""),
             password=make_password(temp_password),
             must_change_password=True,
         )
