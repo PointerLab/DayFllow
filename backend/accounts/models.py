@@ -55,6 +55,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     employment_type = models.CharField(max_length=50, blank=True, default="")
 
     must_change_password = models.BooleanField(default=False)
+    is_approved = models.BooleanField(default=True)
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)

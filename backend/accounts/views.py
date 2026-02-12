@@ -16,9 +16,10 @@ class UserRegistrationView(generics.CreateAPIView):
             serializer.is_valid(raise_exception=True)
             user = serializer.save()
 
-            # Default signup user to HR so they can manage employees.
+            # Default signup user to HR; admin must approve before login.
             user.role = "HR"
             user.is_staff = True
+            user.is_approved = False
             user.save()
         except Exception as e:
             # In development return the exception message and traceback to help debugging
@@ -47,3 +48,32 @@ class EmployeeListAPIView(generics.ListAPIView):
         if user.role not in ["ADMIN", "HR"]:
             raise PermissionDenied("Permission denied")
         return CustomUser.objects.all().order_by("date_of_joining", "id")
+
+
+class PendingHrListAPIView(generics.ListAPIView):
+    serializer_class = EmployeeListSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role != "ADMIN":
+            raise PermissionDenied("Permission denied")
+        return CustomUser.objects.filter(role="HR", is_approved=False).order_by("date_of_joining", "id")
+
+
+class ApproveHrAPIView(generics.UpdateAPIView):
+    serializer_class = EmployeeListSerializer
+    permission_classes = (IsAuthenticated,)
+    queryset = CustomUser.objects.all()
+
+    def update(self, request, *args, **kwargs):
+        if request.user.role != "ADMIN":
+            raise PermissionDenied("Permission denied")
+        user = self.get_object()
+        if user.role != "HR":
+            raise PermissionDenied("Only HR users can be approved")
+        user.is_approved = True
+        user.is_active = True
+        user.save()
+        serializer = self.get_serializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)

@@ -23,3 +23,4 @@ class UserRegistrationTest(APITestCase):
         self.assertEqual(user.email, 'test@example.com')
         self.assertEqual(user.role, 'HR')
         self.assertTrue(user.is_staff)
+        self.assertFalse(user.is_approved)

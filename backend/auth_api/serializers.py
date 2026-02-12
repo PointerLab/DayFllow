@@ -44,6 +44,9 @@ class LoginSerializer(serializers.Serializer):
         if not user.is_active:
             raise serializers.ValidationError("Account is inactive")
 
+        if user.role == "HR" and not user.is_approved:
+            raise serializers.ValidationError("HR account pending admin approval")
+
         data["user"] = user
         return data
 

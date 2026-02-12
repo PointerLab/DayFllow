@@ -58,4 +58,5 @@ class EmployeeListSerializer(serializers.ModelSerializer):
             "department",
             "employment_type",
             "is_active",
+            "is_approved",
         )
