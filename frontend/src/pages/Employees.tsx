@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Header } from '@/components/layout/Header';
 import { AvatarWithBadge } from '@/components/Avatar';
-import { Search, Download, MoreVertical, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Search, Download, MoreVertical, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { fetchEmployees } from '@/api/employees';
 
 interface Employee {
@@ -26,6 +26,7 @@ const Employees: React.FC = () => {
   const [selectedRole, setSelectedRole] = useState('all');
   const [selectedEmployees, setSelectedEmployees] = useState<number[]>([]);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const roles = ['all', 'ADMIN', 'HR', 'EMP'];
 
@@ -53,7 +54,7 @@ const Employees: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [location.state?.refreshKey]);
 
   const filteredEmployees = employees.filter(emp => {
     const fullName = `${emp.first_name} ${emp.last_name}`.trim().toLowerCase();
@@ -111,10 +112,19 @@ const Employees: React.FC = () => {
             <h2 className="text-2xl font-bold text-foreground">Employees</h2>
             <p className="text-muted-foreground">Manage your team members</p>
           </div>
-          <button className="inline-flex items-center gap-2 px-4 py-2.5 bg-card border border-border rounded-lg text-foreground hover:bg-accent transition-colors">
-            <Download size={18} />
-            Export
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate('/employees/new')}
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+            >
+              <Plus size={18} />
+              Add Employee
+            </button>
+            <button className="inline-flex items-center gap-2 px-4 py-2.5 bg-card border border-border rounded-lg text-foreground hover:bg-accent transition-colors">
+              <Download size={18} />
+              Export
+            </button>
+          </div>
         </div>
 
         {/* Filter Toolbar */}

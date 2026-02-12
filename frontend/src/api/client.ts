@@ -45,3 +45,20 @@ export const apiGet = async (path: string) => {
 
   return response.json();
 };
+
+export const apiPost = async (path: string, body: unknown) => {
+  const response = await fetch(`${BASE_URL}${path}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseError(response));
+  }
+
+  return response.json();
+};
