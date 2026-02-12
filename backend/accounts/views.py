@@ -11,15 +11,13 @@ class UserRegistrationView(generics.CreateAPIView):
     permission_classes = (AllowAny,)
 
     def create(self, request, *args, **kwargs):
-        # If there are no users yet, this will be the bootstrap admin
-        is_first_user = not CustomUser.objects.exists()
-
         try:
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             user = serializer.save()
 
-            user.role = "ADMIN"
+            # Default signup user to HR so they can manage employees.
+            user.role = "HR"
             user.is_staff = True
             user.save()
         except Exception as e:

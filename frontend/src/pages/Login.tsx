@@ -5,14 +5,16 @@ import { AuthLayout } from '@/components/auth/AuthLayout';
 import { useToast } from '@/hooks/use-toast';
 import dayflowLogo from '@/assets/dayflow-logo.png';
 import { useAuth } from '@/contexts/AuthContext';
+import { Switch } from '@/components/ui/switch';
 
 const Login: React.FC = () => {
   const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [loginRole, setLoginRole] = useState<'EMP' | 'HR'>('EMP');
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, logout } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -26,10 +28,21 @@ const Login: React.FC = () => {
         title: 'Welcome back!',
         description: 'You have successfully logged in.',
       });
-      if (user?.role === 'EMP') {
-        navigate('/profile/employee');
+      const isAdmin = user?.role === 'ADMIN' || user?.role === 'HR';
+
+      if (loginRole === 'HR') {
+        if (!isAdmin) {
+          toast({
+            title: 'Access denied',
+            description: 'Your account is not an HR/Admin account.',
+            variant: 'destructive',
+          });
+          logout();
+          return;
+        }
+        navigate('/dashboard/admin');
       } else {
-        navigate('/admin');
+        navigate('/dashboard/employee');
       }
     } catch (error) {
       toast({
@@ -117,6 +130,29 @@ const Login: React.FC = () => {
             <button type="button" className="text-sm text-primary hover:underline">
               Forgot password?
             </button>
+          </div>
+
+          {/* Login As Toggle */}
+          <div className="flex items-center justify-between rounded-xl border border-input px-4 py-3">
+            <div>
+              <p className="text-sm font-medium text-foreground">Login As</p>
+              <p className="text-xs text-muted-foreground">
+                {loginRole === 'HR' ? 'HR / Admin' : 'Employee'}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className={`text-xs ${loginRole === 'EMP' ? 'text-foreground' : 'text-muted-foreground'}`}>
+                Employee
+              </span>
+              <Switch
+                checked={loginRole === 'HR'}
+                onCheckedChange={(checked) => setLoginRole(checked ? 'HR' : 'EMP')}
+                aria-label="Toggle HR login"
+              />
+              <span className={`text-xs ${loginRole === 'HR' ? 'text-foreground' : 'text-muted-foreground'}`}>
+                HR
+              </span>
+            </div>
           </div>
 
           {/* Login Button */}

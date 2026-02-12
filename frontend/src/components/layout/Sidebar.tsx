@@ -1,19 +1,19 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Users, Clock, Calendar, LogOut } from 'lucide-react';
+import { Users, Clock, Calendar, LogOut, LayoutDashboard } from 'lucide-react';
 import { AvatarWithBadge } from '../Avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import dayflowLogo from '../../assets/dayflow-logo.png';
 
-const navItems = [
-  { to: '/employees', icon: Users, label: 'Employees' },
-  { to: '/attendance', icon: Clock, label: 'Attendance' },
-  { to: '/leaves', icon: Calendar, label: 'Leaves' },
-];
-
 export const Sidebar: React.FC = () => {
-  const { user, logout, companyLogo } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const isAdmin = user?.role === 'ADMIN' || user?.role === 'HR';
+  const displayName =
+    [user?.first_name, user?.last_name].filter(Boolean).join(' ') ||
+    user?.login_id ||
+    'User';
+  const roleLabel = user?.role === 'HR' ? 'HR' : user?.role === 'ADMIN' ? 'Admin' : 'Employee';
 
   const handleLogout = () => {
     logout();
@@ -21,34 +21,37 @@ export const Sidebar: React.FC = () => {
   };
 
   const getAttendanceLink = () => {
-    return user?.role === 'admin' ? '/attendance/admin' : '/attendance/employee';
+    return isAdmin ? '/attendance/admin' : '/attendance/employee';
   };
 
   const getLeavesLink = () => {
-    return user?.role === 'admin' ? '/leaves/admin' : '/leaves/employee';
+    return isAdmin ? '/leaves/admin' : '/leaves/employee';
   };
 
   const getProfileLink = () => {
-    return user?.role === 'admin' ? '/profile/admin' : '/profile/employee';
+    return isAdmin ? '/profile/admin' : '/profile/employee';
   };
+
+  const navItems = [
+    {
+      to: isAdmin ? '/dashboard/admin' : '/dashboard/employee',
+      icon: LayoutDashboard,
+      label: 'Dashboard',
+    },
+    ...(isAdmin ? [{ to: '/employees', icon: Users, label: 'Employees' }] : []),
+    { to: getAttendanceLink(), icon: Clock, label: 'Attendance' },
+    { to: getLeavesLink(), icon: Calendar, label: 'Leaves' },
+  ];
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-sidebar flex flex-col z-50">
       {/* Logo */}
       <div className="p-6 flex items-center gap-3">
-        {companyLogo ? (
-          <img 
-            src={companyLogo} 
-            alt="Company logo" 
-            className="h-10 w-auto max-w-[160px] object-contain"
-          />
-        ) : (
-          <img 
-            src={dayflowLogo} 
-            alt="Dayflow" 
-            className="h-10 w-auto max-w-[160px] object-contain"
-          />
-        )}
+        <img 
+          src={dayflowLogo} 
+          alt="Dayflow" 
+          className="h-10 w-auto max-w-[160px] object-contain"
+        />
       </div>
 
       {/* Navigation */}
@@ -84,16 +87,16 @@ export const Sidebar: React.FC = () => {
           onClick={() => navigate(getProfileLink())}
         >
           <AvatarWithBadge
-            name={user?.name || 'User'}
-            role={user?.role || 'employee'}
+            name={displayName}
+            role={isAdmin ? 'admin' : 'employee'}
             size="md"
           />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-sidebar-foreground truncate">
-              {user?.name || 'User'}
+              {displayName}
             </p>
-            <p className="text-xs text-sidebar-foreground/60 capitalize">
-              {user?.role || 'Employee'}
+            <p className="text-xs text-sidebar-foreground/60">
+              {roleLabel}
             </p>
           </div>
         </div>

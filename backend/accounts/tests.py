@@ -5,9 +5,9 @@ from rest_framework.test import APITestCase
 from .models import CustomUser
 
 class UserRegistrationTest(APITestCase):
-    def test_user_registration_creates_admin(self):
+    def test_user_registration_creates_hr(self):
         """
-        Ensure new users are created as admins.
+        Ensure new users are created as HR.
         """
         url = reverse('user-registration')
         data = {
@@ -21,5 +21,5 @@ class UserRegistrationTest(APITestCase):
         self.assertEqual(CustomUser.objects.count(), 1)
         user = CustomUser.objects.get()
         self.assertEqual(user.email, 'test@example.com')
-        self.assertEqual(user.role, 'ADMIN')
+        self.assertEqual(user.role, 'HR')
         self.assertTrue(user.is_staff)

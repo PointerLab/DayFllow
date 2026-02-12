@@ -1,0 +1,108 @@
+import React, { useEffect, useState } from "react";
+import { fetchEmployeeDashboard } from "@/api/dashboard";
+import { Header } from "@/components/layout/Header";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+interface EmployeeDashboardStats {
+  today_status: string;
+  present_days: number;
+  leave_days: number;
+  pending_leaves: number;
+}
+
+const statusLabel = (status: string) => {
+  const normalized = status?.toUpperCase();
+  if (normalized === "PRESENT") return "Present";
+  if (normalized === "LEAVE") return "On Leave";
+  if (normalized === "ABSENT") return "Absent";
+  return status || "Unknown";
+};
+
+const EmployeeDashboard: React.FC = () => {
+  const [stats, setStats] = useState<EmployeeDashboardStats | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      try {
+        const data = await fetchEmployeeDashboard();
+        if (mounted) {
+          setStats(data);
+        }
+      } catch (err) {
+        if (mounted) {
+          setError(err instanceof Error ? err.message : "Failed to load dashboard.");
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  return (
+    <div className="p-6 space-y-6">
+      <Header breadcrumb="Dashboard" subtitle="Employee Overview" />
+
+      {error && (
+        <div className="bg-card border border-border rounded-xl p-4 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Today</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-semibold text-foreground">
+              {loading ? "—" : statusLabel(stats?.today_status || "")}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Present Days</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-foreground">
+              {loading ? "—" : stats?.present_days ?? 0}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">This month</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Leave Days</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-foreground">
+              {loading ? "—" : stats?.leave_days ?? 0}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">This month</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Pending Leaves</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-foreground">
+              {loading ? "—" : stats?.pending_leaves ?? 0}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+export default EmployeeDashboard;
