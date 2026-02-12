@@ -110,7 +110,7 @@ const CreateEmployee: React.FC = () => {
                   className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="EMP">Employee</option>
-                  <option value="HR">HR</option>
+                  <option value="INTERN">Intern</option>
                 </select>
               </div>
               <div className="w-1/2">

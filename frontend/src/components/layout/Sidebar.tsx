@@ -13,7 +13,14 @@ export const Sidebar: React.FC = () => {
     [user?.first_name, user?.last_name].filter(Boolean).join(' ') ||
     user?.login_id ||
     'User';
-  const roleLabel = user?.role === 'HR' ? 'HR' : user?.role === 'ADMIN' ? 'Admin' : 'Employee';
+  const roleLabel =
+    user?.role === 'HR'
+      ? 'HR'
+      : user?.role === 'ADMIN'
+        ? 'Admin'
+        : user?.role === 'INT'
+          ? 'Intern'
+          : 'Employee';
 
   const handleLogout = () => {
     logout();

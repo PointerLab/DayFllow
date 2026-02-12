@@ -5,7 +5,7 @@ interface User {
   first_name: string;
   last_name: string;
   email: string;
-  role: 'ADMIN' | 'HR' | 'EMP';
+  role: 'ADMIN' | 'HR' | 'EMP' | 'INT';
   login_id: string;
 }
 
@@ -72,4 +72,3 @@ export const useAuth = () => {
 };
 
 export default AuthContext;
-

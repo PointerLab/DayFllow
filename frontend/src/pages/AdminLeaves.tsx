@@ -7,16 +7,8 @@ import { useToast } from '@/hooks/use-toast';
 
 interface LeaveRequest { id: string; name: string; role: 'admin' | 'employee'; startDate: string; endDate: string; type: string; status: 'pending' | 'approved' | 'rejected'; }
 
-const initialRequests: LeaveRequest[] = [
-  { id: '1', name: 'John Smith', role: 'employee', startDate: '2024-01-20', endDate: '2024-01-22', type: 'Paid Time Off', status: 'pending' },
-  { id: '2', name: 'Emily Davis', role: 'employee', startDate: '2024-01-25', endDate: '2024-01-26', type: 'Sick Leave', status: 'pending' },
-  { id: '3', name: 'David Lee', role: 'employee', startDate: '2024-01-18', endDate: '2024-01-19', type: 'Paid Time Off', status: 'approved' },
-  { id: '4', name: 'Amanda Garcia', role: 'employee', startDate: '2024-01-15', endDate: '2024-01-15', type: 'Sick Leave', status: 'rejected' },
-  { id: '5', name: 'Kevin Thomas', role: 'employee', startDate: '2024-01-28', endDate: '2024-01-31', type: 'Paid Time Off', status: 'pending' },
-];
-
 const AdminLeaves: React.FC = () => {
-  const [requests, setRequests] = useState(initialRequests);
+  const [requests, setRequests] = useState<LeaveRequest[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const { toast } = useToast();
 
@@ -68,16 +60,44 @@ const AdminLeaves: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {requests.map((req) => (
-                  <tr key={req.id} className="hover:bg-muted/30">
-                    <td className="px-4 py-3">{req.status === 'pending' && <input type="checkbox" checked={selectedIds.includes(req.id)} onChange={() => toggleSelect(req.id)} className="w-4 h-4 rounded" />}</td>
-                    <td className="px-4 py-3"><div className="flex items-center gap-3"><AvatarWithBadge name={req.name} role={req.role} size="sm" /><span className="font-medium text-foreground">{req.name}</span></div></td>
-                    <td className="px-4 py-3 text-sm text-foreground">{new Date(req.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</td>
-                    <td className="px-4 py-3 text-sm text-foreground">{new Date(req.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</td>
-                    <td className="px-4 py-3 text-sm text-foreground">{req.type}</td>
-                    <td className="px-4 py-3"><StatusBadge status={req.status} /></td>
+                {requests.length === 0 ? (
+                  <tr>
+                    <td className="px-4 py-10 text-center text-sm text-muted-foreground" colSpan={6}>
+                      No leave requests yet.
+                    </td>
                   </tr>
-                ))}
+                ) : (
+                  requests.map((req) => (
+                    <tr key={req.id} className="hover:bg-muted/30">
+                      <td className="px-4 py-3">
+                        {req.status === 'pending' && (
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.includes(req.id)}
+                            onChange={() => toggleSelect(req.id)}
+                            className="w-4 h-4 rounded"
+                          />
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <AvatarWithBadge name={req.name} role={req.role} size="sm" />
+                          <span className="font-medium text-foreground">{req.name}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-foreground">
+                        {new Date(req.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-foreground">
+                        {new Date(req.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-foreground">{req.type}</td>
+                      <td className="px-4 py-3">
+                        <StatusBadge status={req.status} />
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

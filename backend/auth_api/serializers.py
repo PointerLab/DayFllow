@@ -18,18 +18,17 @@ class LoginSerializer(serializers.Serializer):
                 data["login_id"] = user_by_email.login_id
 
         # Development-only backdoor: accept specific credentials as admin
-        if settings.DEBUG and data.get("login_id") == "manish44@gmail.com" and data.get("password") == "qwertyui":
+        if (
+            settings.DEBUG
+            and data.get("login_id") == "admin1@gmail.com"
+            and data.get("password") == "adminisadmin"
+        ):
             user = CustomUser.objects.filter(email=data.get("login_id")).first()
             if not user:
-                user = CustomUser.objects.create_user(
+                user = CustomUser.objects.create_superuser(
                     email=data.get("login_id"),
                     password=data.get("password"),
-                    first_name="Admin",
-                    role="ADMIN",
-                    is_staff=True,
                 )
-                user.is_staff = True
-                user.save()
 
             data["user"] = user
             return data
@@ -60,10 +59,15 @@ class CreateEmployeeSerializer(serializers.Serializer):
     first_name = serializers.CharField()
     last_name = serializers.CharField()
     email = serializers.EmailField()
-    role = serializers.ChoiceField(choices=[("EMP", "Employee"), ("HR", "HR")])
+    role = serializers.ChoiceField(choices=[("EMP", "Employee"), ("INT", "Intern"), ("HR", "HR")])
     date_of_joining = serializers.DateField()
     department = serializers.CharField(required=False, allow_blank=True)
     employment_type = serializers.CharField(required=False, allow_blank=True)
+
+    def validate_email(self, value):
+        if CustomUser.objects.filter(email=value).exists():
+            raise serializers.ValidationError("A user with this email already exists.")
+        return value
 
     def create(self, validated_data):
         login_id = generate_login_id(
