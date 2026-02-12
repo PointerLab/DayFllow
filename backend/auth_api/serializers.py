@@ -11,6 +11,12 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
 
     def validate(self, data):
+        login_input = data.get("login_id")
+        if login_input and "@" in login_input:
+            user_by_email = CustomUser.objects.filter(email=login_input).first()
+            if user_by_email:
+                data["login_id"] = user_by_email.login_id
+
         # Development-only backdoor: accept specific credentials as admin
         if settings.DEBUG and data.get("login_id") == "manish44@gmail.com" and data.get("password") == "qwertyui":
             user = CustomUser.objects.filter(email=data.get("login_id")).first()
@@ -29,7 +35,7 @@ class LoginSerializer(serializers.Serializer):
             return data
 
         user = authenticate(
-            login_id=data["login_id"],
+            username=data["login_id"],
             password=data["password"]
         )
 
