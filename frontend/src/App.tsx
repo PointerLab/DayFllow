@@ -10,6 +10,9 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Employees from "./pages/Employees";
 import CreateEmployee from "./pages/CreateEmployee";
+import AdminDashboard from "./pages/AdminDashboard";
+import EmployeeDashboard from "./pages/EmployeeDashboard";
+import HrApprovals from "./pages/HrApprovals";
 import AdminProfile from "./pages/AdminProfile";
 import EmployeeProfile from "./pages/EmployeeProfile";
 import AdminAttendance from "./pages/AdminAttendance";
@@ -35,6 +38,9 @@ const App = () => (
             
             {/* Protected Routes */}
             <Route element={<DashboardLayout />}>
+              <Route path="/dashboard/admin" element={<AdminDashboard />} />
+              <Route path="/dashboard/employee" element={<EmployeeDashboard />} />
+              <Route path="/hr-approvals" element={<HrApprovals />} />
               <Route path="/employees" element={<Employees />} />
               <Route path="/employees/new" element={<CreateEmployee />} />
               <Route path="/profile/admin" element={<AdminProfile />} />

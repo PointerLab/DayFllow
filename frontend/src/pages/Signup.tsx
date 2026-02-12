@@ -60,8 +60,8 @@ const Signup: React.FC = () => {
       // Auto-login so the user is authenticated and sees their entered details
       const user = await login(email, password);
 
-      if (user?.role === 'ADMIN') {
-        navigate('/profile/admin', {
+      if (user?.role === 'ADMIN' || user?.role === 'HR') {
+        navigate('/dashboard/admin', {
           state: {
             first_name: firstName,
             last_name: lastName,
@@ -69,7 +69,7 @@ const Signup: React.FC = () => {
           },
         });
       } else if (user?.role === 'EMP') {
-        navigate('/profile/employee');
+        navigate('/dashboard/employee');
       } else {
         navigate('/login');
       }

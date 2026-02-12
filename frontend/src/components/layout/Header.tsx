@@ -16,6 +16,11 @@ export const Header: React.FC<HeaderProps> = ({ breadcrumb, subtitle }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [attendanceState, setAttendanceState] = useState<AttendanceState>('present');
+  const isAdmin = user?.role === 'ADMIN' || user?.role === 'HR';
+  const displayName =
+    [user?.first_name, user?.last_name].filter(Boolean).join(' ') ||
+    user?.login_id ||
+    'User';
 
   const handleToggleAttendance = () => {
     setAttendanceState((prev) => {
@@ -26,7 +31,7 @@ export const Header: React.FC<HeaderProps> = ({ breadcrumb, subtitle }) => {
   };
 
   const getProfileLink = () => {
-    return user?.role === 'admin' ? '/profile/admin' : '/profile/employee';
+    return isAdmin ? '/profile/admin' : '/profile/employee';
   };
 
   return (
@@ -61,8 +66,8 @@ export const Header: React.FC<HeaderProps> = ({ breadcrumb, subtitle }) => {
           className="transition-transform hover:scale-105"
         >
           <AvatarWithBadge
-            name={user?.name || 'User'}
-            role={user?.role || 'employee'}
+            name={displayName}
+            role={isAdmin ? 'admin' : 'employee'}
             size="md"
           />
         </button>

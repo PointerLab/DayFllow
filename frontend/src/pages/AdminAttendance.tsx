@@ -9,7 +9,7 @@ interface AttendanceRecord {
   user: number;
   user_login_id: string;
   user_name: string;
-  user_role: 'ADMIN' | 'HR' | 'EMP';
+  user_role: 'ADMIN' | 'HR' | 'EMP' | 'INT';
   date: string;
   check_in: string | null;
   check_out: string | null;
@@ -36,7 +36,8 @@ const formatHours = (hours: number) => {
   return `${hours.toFixed(2)}h`;
 };
 
-const getRoleBadgeType = (role: AttendanceRecord['user_role']) => (role === 'EMP' ? 'employee' : 'admin');
+const getRoleBadgeType = (role: AttendanceRecord['user_role']) =>
+  role === 'EMP' || role === 'INT' ? 'employee' : 'admin';
 
 const statusLabel = (status: AttendanceRecord['status']) => {
   if (status === 'PRESENT') return 'Present';

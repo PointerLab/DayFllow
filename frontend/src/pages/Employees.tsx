@@ -11,7 +11,7 @@ interface Employee {
   last_name: string;
   email: string;
   login_id: string;
-  role: 'ADMIN' | 'HR' | 'EMP';
+  role: 'ADMIN' | 'HR' | 'EMP' | 'INT';
   date_of_joining: string;
   department: string;
   employment_type: string;
@@ -28,7 +28,7 @@ const Employees: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const roles = ['all', 'ADMIN', 'HR', 'EMP'];
+  const roles = ['all', 'ADMIN', 'HR', 'EMP', 'INT'];
 
   useEffect(() => {
     let isMounted = true;
@@ -85,13 +85,16 @@ const Employees: React.FC = () => {
   };
 
   const handleRowClick = (employee: Employee) => {
-    navigate(employee.role === 'EMP' ? '/profile/employee' : '/profile/admin');
+    const isEmployee = employee.role === 'EMP' || employee.role === 'INT';
+    navigate(isEmployee ? '/profile/employee' : '/profile/admin');
   };
 
-  const getRoleBadgeType = (role: Employee['role']) => (role === 'EMP' ? 'employee' : 'admin');
+  const getRoleBadgeType = (role: Employee['role']) =>
+    role === 'EMP' || role === 'INT' ? 'employee' : 'admin';
   const getRoleLabel = (role: Employee['role']) => {
     if (role === 'ADMIN') return 'Admin';
     if (role === 'HR') return 'HR';
+    if (role === 'INT') return 'Intern';
     return 'Employee';
   };
 
