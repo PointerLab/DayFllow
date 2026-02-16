@@ -1,17 +1,92 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Header } from '@/components/layout/Header';
 import { ChevronLeft, ChevronRight, Calendar, Check, Clock } from 'lucide-react';
+import { fetchMyAttendance, type AttendanceRecord } from '@/api/attendance';
 
-const myAttendance = [
-  { date: '2024-01-15', checkIn: '09:00 AM', checkOut: '06:00 PM', workHours: '9h 00m', extra: '+1h' },
-  { date: '2024-01-14', checkIn: '08:45 AM', checkOut: '05:30 PM', workHours: '8h 45m', extra: '+45m' },
-  { date: '2024-01-13', checkIn: '09:15 AM', checkOut: '05:45 PM', workHours: '8h 30m', extra: '+30m' },
-  { date: '2024-01-12', checkIn: '09:00 AM', checkOut: '05:00 PM', workHours: '8h 00m', extra: '0' },
-  { date: '2024-01-11', checkIn: '08:30 AM', checkOut: '06:30 PM', workHours: '10h 00m', extra: '+2h' },
-];
+const HOURS_PER_DAY = 8;
+
+const parseDate = (value: string) => new Date(`${value}T00:00:00`);
+
+const formatTime = (value: string | null) => {
+  if (!value) return '--';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '--';
+  return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+};
+
+const formatHours = (hours: number) => {
+  if (!Number.isFinite(hours)) return '--';
+  return `${hours.toFixed(2)}h`;
+};
+
+const formatExtraHours = (hours: number) => {
+  if (!Number.isFinite(hours)) return '--';
+  const diff = hours - HOURS_PER_DAY;
+  if (Math.abs(diff) < 0.01) return '0h 00m';
+
+  const sign = diff > 0 ? '+' : '-';
+  const totalMinutes = Math.round(Math.abs(diff) * 60);
+  const displayHours = Math.floor(totalMinutes / 60);
+  const displayMinutes = totalMinutes % 60;
+
+  return `${sign}${displayHours}h ${String(displayMinutes).padStart(2, '0')}m`;
+};
 
 const EmployeeAttendance: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadAttendance = async () => {
+      try {
+        const data = await fetchMyAttendance();
+        if (isMounted) {
+          const sorted = [...data].sort((a, b) => b.date.localeCompare(a.date));
+          setAttendance(sorted);
+          setError(null);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(err instanceof Error ? err.message : 'Failed to load attendance.');
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadAttendance();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const monthAttendance = useMemo(() => {
+    const month = currentDate.getMonth();
+    const year = currentDate.getFullYear();
+
+    return attendance.filter((record) => {
+      const date = parseDate(record.date);
+      return date.getMonth() === month && date.getFullYear() === year;
+    });
+  }, [attendance, currentDate]);
+
+  const presentDays = monthAttendance.filter(
+    (record) => record.status === 'PRESENT' || record.status === 'HALF_DAY',
+  ).length;
+
+  const leavesTaken = monthAttendance.filter((record) => record.status === 'LEAVE').length;
+
+  const totalWorkingDays = monthAttendance.filter((record) => record.status !== 'LEAVE').length;
+
+  const moveMonth = (offset: number) => {
+    setCurrentDate((prev) => new Date(prev.getFullYear(), prev.getMonth() + offset, 1));
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -21,25 +96,25 @@ const EmployeeAttendance: React.FC = () => {
         <div className="bg-lavender rounded-xl p-6 mb-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
-              <button onClick={() => setCurrentDate(d => new Date(d.setMonth(d.getMonth() - 1)))} className="p-2 hover:bg-card rounded-lg"><ChevronLeft size={18} /></button>
+              <button onClick={() => moveMonth(-1)} className="p-2 hover:bg-card rounded-lg"><ChevronLeft size={18} /></button>
               <span className="font-medium text-foreground">{currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
-              <button onClick={() => setCurrentDate(d => new Date(d.setMonth(d.getMonth() + 1)))} className="p-2 hover:bg-card rounded-lg"><ChevronRight size={18} /></button>
+              <button onClick={() => moveMonth(1)} className="p-2 hover:bg-card rounded-lg"><ChevronRight size={18} /></button>
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div className="bg-card rounded-xl p-4 text-center">
               <Check className="mx-auto mb-2 text-success-foreground" size={24} />
-              <p className="text-2xl font-bold text-foreground">20</p>
+              <p className="text-2xl font-bold text-foreground">{isLoading ? '--' : presentDays}</p>
               <p className="text-sm text-muted-foreground">Days Present</p>
             </div>
             <div className="bg-card rounded-xl p-4 text-center">
               <Calendar className="mx-auto mb-2 text-info-foreground" size={24} />
-              <p className="text-2xl font-bold text-foreground">2</p>
+              <p className="text-2xl font-bold text-foreground">{isLoading ? '--' : leavesTaken}</p>
               <p className="text-sm text-muted-foreground">Leaves Taken</p>
             </div>
             <div className="bg-card rounded-xl p-4 text-center">
               <Clock className="mx-auto mb-2 text-primary" size={24} />
-              <p className="text-2xl font-bold text-foreground">22</p>
+              <p className="text-2xl font-bold text-foreground">{isLoading ? '--' : totalWorkingDays}</p>
               <p className="text-sm text-muted-foreground">Total Working Days</p>
             </div>
           </div>
@@ -56,15 +131,39 @@ const EmployeeAttendance: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {myAttendance.map((day) => (
-                <tr key={day.date} className="hover:bg-muted/30">
-                  <td className="px-4 py-3 text-sm text-foreground">{new Date(day.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</td>
-                  <td className="px-4 py-3 text-sm text-foreground">{day.checkIn}</td>
-                  <td className="px-4 py-3 text-sm text-foreground">{day.checkOut}</td>
-                  <td className="px-4 py-3 text-sm text-foreground">{day.workHours}</td>
-                  <td className={`px-4 py-3 text-sm font-medium ${day.extra.startsWith('+') ? 'text-success-foreground' : 'text-muted-foreground'}`}>{day.extra}</td>
+              {isLoading ? (
+                <tr>
+                  <td className="px-4 py-10 text-center text-sm text-muted-foreground" colSpan={5}>
+                    Loading attendance...
+                  </td>
                 </tr>
-              ))}
+              ) : error ? (
+                <tr>
+                  <td className="px-4 py-10 text-center text-sm text-destructive" colSpan={5}>
+                    {error}
+                  </td>
+                </tr>
+              ) : monthAttendance.length === 0 ? (
+                <tr>
+                  <td className="px-4 py-10 text-center text-sm text-muted-foreground" colSpan={5}>
+                    No attendance records for this month.
+                  </td>
+                </tr>
+              ) : (
+                monthAttendance.map((record) => {
+                  const extraHours = record.total_hours - HOURS_PER_DAY;
+
+                  return (
+                    <tr key={record.id} className="hover:bg-muted/30">
+                      <td className="px-4 py-3 text-sm text-foreground">{parseDate(record.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</td>
+                      <td className="px-4 py-3 text-sm text-foreground">{formatTime(record.check_in)}</td>
+                      <td className="px-4 py-3 text-sm text-foreground">{formatTime(record.check_out)}</td>
+                      <td className="px-4 py-3 text-sm text-foreground">{formatHours(record.total_hours)}</td>
+                      <td className={`px-4 py-3 text-sm font-medium ${extraHours > 0 ? 'text-success-foreground' : 'text-muted-foreground'}`}>{formatExtraHours(record.total_hours)}</td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>

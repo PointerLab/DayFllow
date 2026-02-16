@@ -23,6 +23,12 @@ class LoginAPIView(APIView):
             "must_change_password": user.must_change_password,
             "role": user.role,
             "login_id": user.login_id,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "email": user.email,
+            "date_of_joining": user.date_of_joining,
+            "department": user.department,
+            "employment_type": user.employment_type,
         }, status=status.HTTP_200_OK)
     
 class ChangePasswordAPIView(APIView):
@@ -69,5 +75,4 @@ class CreateEmployeeAPIView(APIView):
             "temporary_password": temp_password,
             "message": "Employee created successfully"
         }, status=status.HTTP_201_CREATED)
-
 

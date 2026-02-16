@@ -11,6 +11,8 @@ const AdminLeaves: React.FC = () => {
   const [requests, setRequests] = useState<LeaveRequest[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const { toast } = useToast();
+  const paidRequests = requests.filter((request) => request.type.toLowerCase().includes('paid')).length;
+  const sickRequests = requests.filter((request) => request.type.toLowerCase().includes('sick')).length;
 
   const handleApprove = () => {
     if (selectedIds.length === 0) return;
@@ -45,7 +47,7 @@ const AdminLeaves: React.FC = () => {
         <div className="grid lg:grid-cols-4 gap-6">
           <div className="lg:col-span-3 bg-card rounded-xl border border-border overflow-hidden">
             <div className="p-4 border-b border-border flex items-center justify-between">
-              <div className="flex gap-4"><span className="px-3 py-1 bg-primary text-primary-foreground rounded-full text-sm">Paid: 24 Days</span><span className="px-3 py-1 bg-info text-info-foreground rounded-full text-sm">Sick: 07 Days</span></div>
+              <div className="flex gap-4"><span className="px-3 py-1 bg-primary text-primary-foreground rounded-full text-sm">Paid Requests: {paidRequests}</span><span className="px-3 py-1 bg-info text-info-foreground rounded-full text-sm">Sick Requests: {sickRequests}</span></div>
               <div className="relative"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" /><input type="text" placeholder="Search..." className="pl-9 pr-4 py-2 rounded-lg border border-input bg-background text-sm" /></div>
             </div>
             <table className="w-full">

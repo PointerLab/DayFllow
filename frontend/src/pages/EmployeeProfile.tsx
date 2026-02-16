@@ -1,32 +1,30 @@
 import React from 'react';
 import { Header } from '@/components/layout/Header';
 import { AvatarWithBadge } from '@/components/Avatar';
-import { Mail, Phone, MapPin, Calendar, Briefcase, Building2, User, FileText, Clock } from 'lucide-react';
+import { Mail, User, Briefcase, Building2, Calendar, Clock } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+
+const roleLabel = (role?: 'ADMIN' | 'HR' | 'EMP' | 'INT') => {
+  if (role === 'ADMIN') return 'Admin';
+  if (role === 'HR') return 'HR';
+  if (role === 'INT') return 'Intern';
+  if (role === 'EMP') return 'Employee';
+  return '--';
+};
 
 const EmployeeProfile: React.FC = () => {
-  const employeeInfo = {
-    name: 'John Smith',
-    email: 'john.s@dayflow.com',
-    mobile: '+1 (555) 987-6543',
-    employeeId: 'EMP001',
-    department: 'Engineering',
-    position: 'Senior Software Engineer',
-    manager: 'Lisa Anderson',
-    location: 'San Francisco, CA',
-    joiningDate: '2023-03-20',
-    employmentType: 'Full-time',
-    workPhone: '+1 (555) 123-0001',
-    dateOfBirth: '1990-05-15',
-    emergencyContact: 'Jane Smith - +1 (555) 222-3333',
-    address: '123 Tech Street, San Francisco, CA 94102',
-  };
-
-  const documents = [
-    { name: 'Employment Contract', date: '2023-03-20' },
-    { name: 'NDA Agreement', date: '2023-03-20' },
-    { name: 'ID Verification', date: '2023-03-18' },
-    { name: 'Tax Form W-4', date: '2023-03-22' },
-  ];
+  const { user } = useAuth();
+  const displayName =
+    [user?.first_name, user?.last_name].filter(Boolean).join(' ').trim() ||
+    user?.login_id ||
+    'User';
+  const joiningDate = user?.date_of_joining
+    ? new Date(`${user.date_of_joining}T00:00:00`).toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    })
+    : '--';
 
   return (
     <div className="min-h-screen bg-background">
@@ -34,20 +32,12 @@ const EmployeeProfile: React.FC = () => {
 
       <div className="p-6">
         <div className="grid lg:grid-cols-3 gap-6">
-          {/* Left Column - Profile Card */}
           <div className="lg:col-span-1">
             <div className="bg-card rounded-xl border border-border p-6">
               <div className="flex flex-col items-center text-center mb-6">
-                <AvatarWithBadge
-                  name={employeeInfo.name}
-                  role="employee"
-                  size="xl"
-                />
-                <h2 className="text-xl font-bold text-foreground mt-4">{employeeInfo.name}</h2>
-                <p className="text-primary font-medium">{employeeInfo.position}</p>
-                <span className="mt-2 px-3 py-1 bg-lavender text-primary text-sm rounded-full">
-                  {employeeInfo.department}
-                </span>
+                <AvatarWithBadge name={displayName} role="employee" size="xl" />
+                <h2 className="text-xl font-bold text-foreground mt-4">{displayName}</h2>
+                <p className="text-primary font-medium">{roleLabel(user?.role)}</p>
               </div>
 
               <div className="space-y-4">
@@ -56,82 +46,56 @@ const EmployeeProfile: React.FC = () => {
                     <Briefcase size={16} className="text-primary" />
                   </div>
                   <span className="text-muted-foreground">Employee ID:</span>
-                  <span className="text-foreground font-medium font-mono ml-auto">{employeeInfo.employeeId}</span>
+                  <span className="text-foreground font-medium font-mono ml-auto">{user?.login_id || '--'}</span>
                 </div>
                 <div className="flex items-center gap-3 text-sm">
                   <div className="p-2 bg-lavender rounded-lg">
                     <Mail size={16} className="text-primary" />
                   </div>
-                  <span className="text-foreground">{employeeInfo.email}</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm">
-                  <div className="p-2 bg-lavender rounded-lg">
-                    <Phone size={16} className="text-primary" />
-                  </div>
-                  <span className="text-foreground">{employeeInfo.mobile}</span>
+                  <span className="text-foreground">{user?.email || '--'}</span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Right Column - Private Info */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Company Info */}
             <div className="bg-card rounded-xl border border-border p-6">
-              <h3 className="font-semibold text-foreground mb-6">Company Information</h3>
+              <h3 className="font-semibold text-foreground mb-6">Basic Information</h3>
               <div className="grid md:grid-cols-2 gap-6">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-lavender rounded-lg">
-                    <Building2 size={18} className="text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Department</p>
-                    <p className="text-sm font-medium text-foreground">{employeeInfo.department}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-start gap-3">
                   <div className="p-2 bg-lavender rounded-lg">
                     <User size={18} className="text-primary" />
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Manager</p>
-                    <p className="text-sm font-medium text-foreground">{employeeInfo.manager}</p>
+                    <p className="text-xs text-muted-foreground">First Name</p>
+                    <p className="text-sm font-medium text-foreground">{user?.first_name || '--'}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-start gap-3">
                   <div className="p-2 bg-lavender rounded-lg">
-                    <MapPin size={18} className="text-primary" />
+                    <User size={18} className="text-primary" />
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Location</p>
-                    <p className="text-sm font-medium text-foreground">{employeeInfo.location}</p>
+                    <p className="text-xs text-muted-foreground">Last Name</p>
+                    <p className="text-sm font-medium text-foreground">{user?.last_name || '--'}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-lavender rounded-lg">
-                    <Calendar size={18} className="text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Joining Date</p>
-                    <p className="text-sm font-medium text-foreground">
-                      {new Date(employeeInfo.joiningDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Personal Info */}
-            <div className="bg-card rounded-xl border border-border p-6">
-              <h3 className="font-semibold text-foreground mb-6">Personal Information</h3>
-              <div className="grid md:grid-cols-2 gap-6">
                 <div className="flex items-start gap-3">
                   <div className="p-2 bg-lavender rounded-lg">
                     <Briefcase size={18} className="text-primary" />
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Job Title</p>
-                    <p className="text-sm font-medium text-foreground">{employeeInfo.position}</p>
+                    <p className="text-xs text-muted-foreground">Role</p>
+                    <p className="text-sm font-medium text-foreground">{roleLabel(user?.role)}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-lavender rounded-lg">
+                    <Building2 size={18} className="text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Department</p>
+                    <p className="text-sm font-medium text-foreground">{user?.department || '--'}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -140,16 +104,7 @@ const EmployeeProfile: React.FC = () => {
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Employment Type</p>
-                    <p className="text-sm font-medium text-foreground">{employeeInfo.employmentType}</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-lavender rounded-lg">
-                    <Phone size={18} className="text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Work Phone</p>
-                    <p className="text-sm font-medium text-foreground">{employeeInfo.workPhone}</p>
+                    <p className="text-sm font-medium text-foreground">{user?.employment_type || '--'}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -157,61 +112,18 @@ const EmployeeProfile: React.FC = () => {
                     <Calendar size={18} className="text-primary" />
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Date of Birth</p>
-                    <p className="text-sm font-medium text-foreground">
-                      {new Date(employeeInfo.dateOfBirth).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                    </p>
+                    <p className="text-xs text-muted-foreground">Date of Joining</p>
+                    <p className="text-sm font-medium text-foreground">{joiningDate}</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Emergency & Address */}
             <div className="bg-card rounded-xl border border-border p-6">
-              <h3 className="font-semibold text-foreground mb-6">Emergency Contact & Address</h3>
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-lavender rounded-lg">
-                    <Phone size={18} className="text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Emergency Contact</p>
-                    <p className="text-sm font-medium text-foreground">{employeeInfo.emergencyContact}</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-lavender rounded-lg">
-                    <MapPin size={18} className="text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Address</p>
-                    <p className="text-sm font-medium text-foreground">{employeeInfo.address}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Documents */}
-            <div className="bg-card rounded-xl border border-border p-6">
-              <h3 className="font-semibold text-foreground mb-6">Documents</h3>
-              <div className="grid md:grid-cols-2 gap-4">
-                {documents.map((doc) => (
-                  <div 
-                    key={doc.name}
-                    className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors cursor-pointer"
-                  >
-                    <div className="p-2 bg-lavender rounded-lg">
-                      <FileText size={18} className="text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{doc.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(doc.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <h3 className="font-semibold text-foreground mb-2">Additional Profile Data</h3>
+              <p className="text-sm text-muted-foreground">
+                No extra profile details are available for this account yet.
+              </p>
             </div>
           </div>
         </div>
