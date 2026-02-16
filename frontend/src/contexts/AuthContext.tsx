@@ -7,6 +7,9 @@ interface User {
   email: string;
   role: 'ADMIN' | 'HR' | 'EMP' | 'INT';
   login_id: string;
+  date_of_joining?: string;
+  department?: string;
+  employment_type?: string;
 }
 
 interface AuthContextType {
@@ -34,10 +37,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const userData: User = {
       role: data.role,
       login_id: data.login_id,
-      // Sensible defaults if not provided
-      first_name: userDetails?.first_name || '',
-      last_name: userDetails?.last_name || '',
-      email: userDetails?.email || loginId,
+      first_name: data.first_name ?? userDetails?.first_name ?? '',
+      last_name: data.last_name ?? userDetails?.last_name ?? '',
+      email: data.email ?? userDetails?.email ?? loginId,
+      date_of_joining: data.date_of_joining ?? userDetails?.date_of_joining,
+      department: data.department ?? userDetails?.department ?? '',
+      employment_type: data.employment_type ?? userDetails?.employment_type ?? '',
     };
     setUser(userData);
     localStorage.setItem('dayflow_user', JSON.stringify(userData));

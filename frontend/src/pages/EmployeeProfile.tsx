@@ -1,7 +1,7 @@
 import React from 'react';
 import { Header } from '@/components/layout/Header';
 import { AvatarWithBadge } from '@/components/Avatar';
-import { Mail, User, Briefcase, Building2 } from 'lucide-react';
+import { Mail, User, Briefcase, Building2, Calendar, Clock } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 const roleLabel = (role?: 'ADMIN' | 'HR' | 'EMP' | 'INT') => {
@@ -18,6 +18,13 @@ const EmployeeProfile: React.FC = () => {
     [user?.first_name, user?.last_name].filter(Boolean).join(' ').trim() ||
     user?.login_id ||
     'User';
+  const joiningDate = user?.date_of_joining
+    ? new Date(`${user.date_of_joining}T00:00:00`).toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    })
+    : '--';
 
   return (
     <div className="min-h-screen bg-background">
@@ -88,7 +95,25 @@ const EmployeeProfile: React.FC = () => {
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Department</p>
-                    <p className="text-sm font-medium text-foreground">--</p>
+                    <p className="text-sm font-medium text-foreground">{user?.department || '--'}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-lavender rounded-lg">
+                    <Clock size={18} className="text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Employment Type</p>
+                    <p className="text-sm font-medium text-foreground">{user?.employment_type || '--'}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-lavender rounded-lg">
+                    <Calendar size={18} className="text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Date of Joining</p>
+                    <p className="text-sm font-medium text-foreground">{joiningDate}</p>
                   </div>
                 </div>
               </div>

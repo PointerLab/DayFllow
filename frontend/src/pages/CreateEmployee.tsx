@@ -8,7 +8,7 @@ const CreateEmployee: React.FC = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState<'EMP' | 'HR'>('EMP');
+  const [role, setRole] = useState<'EMP' | 'INT' | 'HR'>('EMP');
   const [dateOfJoining, setDateOfJoining] = useState('');
   const [department, setDepartment] = useState('');
   const [employmentType, setEmploymentType] = useState('');
@@ -106,11 +106,11 @@ const CreateEmployee: React.FC = () => {
                 <label className="block text-sm font-medium text-foreground mb-2">Role</label>
                 <select
                   value={role}
-                  onChange={(e) => setRole(e.target.value as 'EMP' | 'HR')}
+                  onChange={(e) => setRole(e.target.value as 'EMP' | 'INT' | 'HR')}
                   className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="EMP">Employee</option>
-                  <option value="INTERN">Intern</option>
+                  <option value="INT">Intern</option>
                 </select>
               </div>
               <div className="w-1/2">
