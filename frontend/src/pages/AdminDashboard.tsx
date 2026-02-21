@@ -1,10 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchAdminDashboard } from "@/api/dashboard";
-import {
-  DashboardNotification,
-  NotificationPanel,
-} from "@/components/dashboard/NotificationPanel";
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
@@ -25,32 +21,6 @@ const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
 
   const isAdmin = user?.role === "ADMIN" || user?.role === "HR";
-  const notifications: DashboardNotification[] = [
-    {
-      id: "admin-pending-leaves",
-      title: "Pending leave requests",
-      message: "3 leave requests are waiting for your approval.",
-      time: "10 minutes ago",
-      tone: "warning",
-      read: false,
-    },
-    {
-      id: "admin-new-employee",
-      title: "New employee onboarding",
-      message: "A new employee profile was created and is ready for review.",
-      time: "1 hour ago",
-      tone: "info",
-      read: false,
-    },
-    {
-      id: "admin-attendance-closed",
-      title: "Attendance synced",
-      message: "Today's attendance sheet has been processed successfully.",
-      time: "Today, 9:15 AM",
-      tone: "success",
-      read: true,
-    },
-  ];
 
   useEffect(() => {
     let mounted = true;
@@ -193,8 +163,6 @@ const AdminDashboard: React.FC = () => {
           </CardContent>
         </Card>
       </div>
-
-      <NotificationPanel title="Admin Notifications" items={notifications} />
     </div>
   );
 };
