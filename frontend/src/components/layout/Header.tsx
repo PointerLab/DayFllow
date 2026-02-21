@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Bell } from 'lucide-react';
 import { AvatarWithBadge } from '../Avatar';
 import { StatusBadge } from '../StatusBadge';
+import { NotificationBell } from './NotificationBell';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -54,11 +54,7 @@ export const Header: React.FC<HeaderProps> = ({ breadcrumb, subtitle }) => {
           <StatusBadge status={attendanceState} />
         </button>
 
-        {/* Notification Bell */}
-        <button className="relative p-2 rounded-full hover:bg-accent transition-colors">
-          <Bell size={20} className="text-foreground" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-destructive rounded-full" />
-        </button>
+        <NotificationBell />
 
         {/* User Avatar */}
         <button 
