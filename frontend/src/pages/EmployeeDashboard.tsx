@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { fetchEmployeeDashboard } from "@/api/dashboard";
+import {
+  DashboardNotification,
+  NotificationPanel,
+} from "@/components/dashboard/NotificationPanel";
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -22,6 +26,32 @@ const EmployeeDashboard: React.FC = () => {
   const [stats, setStats] = useState<EmployeeDashboardStats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const notifications: DashboardNotification[] = [
+    {
+      id: "emp-leave-status",
+      title: "Leave request approved",
+      message: "Your annual leave request for next Monday was approved.",
+      time: "30 minutes ago",
+      tone: "success",
+      read: false,
+    },
+    {
+      id: "emp-attendance-reminder",
+      title: "Attendance reminder",
+      message: "Don't forget to complete your end-of-day attendance update.",
+      time: "Today, 4:00 PM",
+      tone: "warning",
+      read: false,
+    },
+    {
+      id: "emp-policy-update",
+      title: "Policy update",
+      message: "The leave policy document was updated this week.",
+      time: "Yesterday",
+      tone: "info",
+      read: true,
+    },
+  ];
 
   useEffect(() => {
     let mounted = true;
@@ -101,6 +131,8 @@ const EmployeeDashboard: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+
+      <NotificationPanel title="Your Notifications" items={notifications} />
     </div>
   );
 };
