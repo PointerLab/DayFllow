@@ -66,6 +66,10 @@ class ApproveHrAPIView(generics.UpdateAPIView):
     permission_classes = (IsAuthenticated,)
     queryset = CustomUser.objects.all()
 
+    def post(self, request, *args, **kwargs):
+        # Frontend triggers this approval action with POST.
+        return self.update(request, *args, **kwargs)
+
     def update(self, request, *args, **kwargs):
         if request.user.role != "ADMIN":
             raise PermissionDenied("Permission denied")
