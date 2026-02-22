@@ -12,7 +12,7 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [loginRole, setLoginRole] = useState<'EMP' | 'HR'>('EMP');
+  const [loginRole, setLoginRole] = useState<'EMP' | 'ADMIN'>('EMP');
   const [isLoading, setIsLoading] = useState(false);
   const { login, logout } = useAuth();
   const navigate = useNavigate();
@@ -30,11 +30,11 @@ const Login: React.FC = () => {
       });
       const isAdmin = user?.role === 'ADMIN' || user?.role === 'HR';
 
-      if (loginRole === 'HR') {
+      if (loginRole === 'ADMIN') {
         if (!isAdmin) {
           toast({
             title: 'Access denied',
-            description: 'Your account is not an HR/Admin account.',
+            description: 'Your account is not an Admin account.',
             variant: 'destructive',
           });
           logout();
@@ -137,7 +137,7 @@ const Login: React.FC = () => {
             <div>
               <p className="text-sm font-medium text-foreground">Login As</p>
               <p className="text-xs text-muted-foreground">
-                {loginRole === 'HR' ? 'HR / Admin' : 'Employee'}
+                {loginRole === 'ADMIN' ? 'Admin' : 'Employee'}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -145,12 +145,12 @@ const Login: React.FC = () => {
                 Employee
               </span>
               <Switch
-                checked={loginRole === 'HR'}
-                onCheckedChange={(checked) => setLoginRole(checked ? 'HR' : 'EMP')}
-                aria-label="Toggle HR login"
+                checked={loginRole === 'ADMIN'}
+                onCheckedChange={(checked) => setLoginRole(checked ? 'ADMIN' : 'EMP')}
+                aria-label="Toggle admin login"
               />
-              <span className={`text-xs ${loginRole === 'HR' ? 'text-foreground' : 'text-muted-foreground'}`}>
-                HR
+              <span className={`text-xs ${loginRole === 'ADMIN' ? 'text-foreground' : 'text-muted-foreground'}`}>
+                Admin
               </span>
             </div>
           </div>

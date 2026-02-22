@@ -23,6 +23,7 @@ const AdminProfile: React.FC = () => {
         <div>
           <p><strong>Name:</strong> {[user.first_name, user.last_name].filter(Boolean).join(' ') || user.login_id}</p>
           <p><strong>Email:</strong> {user.email || '--'}</p>
+          <p><strong>Company:</strong> {user.company_name || '--'}</p>
           <p><strong>Login ID:</strong> {user.login_id || '--'}</p>
           <p><strong>Role:</strong> {user.role || '--'}</p>
           <p><strong>Department:</strong> {user.department || '--'}</p>

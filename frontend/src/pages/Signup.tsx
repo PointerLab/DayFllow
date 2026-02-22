@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 const Signup: React.FC = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [companyName, setCompanyName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -47,6 +48,7 @@ const Signup: React.FC = () => {
       await signup({
         first_name: firstName,
         last_name: lastName,
+        company_name: companyName,
         email,
         password,
       });
@@ -122,6 +124,23 @@ const Signup: React.FC = () => {
             </div>
           </div>
 
+
+          {/* Company Name */}
+          <div>
+            <label htmlFor="companyName" className="block text-sm font-medium text-foreground mb-2">
+              Company Name
+            </label>
+            <input
+              id="companyName"
+              type="text"
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              placeholder="Acme Inc."
+              className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              required
+              autoComplete="organization"
+            />
+          </div>
 
           {/* Work Email */}
           <div>

@@ -26,6 +26,7 @@ class LoginAPIView(APIView):
             "first_name": user.first_name,
             "last_name": user.last_name,
             "email": user.email,
+            "company_name": user.company_name,
             "date_of_joining": user.date_of_joining,
             "department": user.department,
             "employment_type": user.employment_type,
@@ -65,7 +66,7 @@ class CreateEmployeeAPIView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        serializer = CreateEmployeeSerializer(data=request.data)
+        serializer = CreateEmployeeSerializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
 
         user, temp_password = serializer.save()
@@ -75,4 +76,3 @@ class CreateEmployeeAPIView(APIView):
             "temporary_password": temp_password,
             "message": "Employee created successfully"
         }, status=status.HTTP_201_CREATED)
-

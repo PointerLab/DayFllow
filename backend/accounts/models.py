@@ -48,6 +48,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     first_name = models.CharField(max_length=50, blank=True)
     last_name = models.CharField(max_length=50, blank=True)
+    company_name = models.CharField(max_length=150, blank=True, default="")
 
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default="EMP")
     date_of_joining = models.DateField(default=date.today)

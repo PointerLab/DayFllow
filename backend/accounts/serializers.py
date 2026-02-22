@@ -13,10 +13,14 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             'password',
             'first_name',
             'last_name',
+            'company_name',
             'role',
             'department',
             'employment_type',
         )
+        extra_kwargs = {
+            'company_name': {'required': True, 'allow_blank': False},
+        }
 
     def create(self, validated_data):
         role = validated_data.pop('role', None)
@@ -37,6 +41,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             password=validated_data['password'],
             first_name=validated_data.get('first_name', ''),
             last_name=validated_data.get('last_name', ''),
+            company_name=validated_data.get('company_name', ''),
             role=role if role else 'EMP',
             department=validated_data.get('department', ''),
             employment_type=validated_data.get('employment_type', ''),
@@ -53,6 +58,7 @@ class EmployeeListSerializer(serializers.ModelSerializer):
             "email",
             "first_name",
             "last_name",
+            "company_name",
             "role",
             "date_of_joining",
             "department",

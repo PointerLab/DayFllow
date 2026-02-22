@@ -2,9 +2,35 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
+from django.db import connection, transaction
+from django.utils.text import slugify
 from .serializers import UserRegistrationSerializer, EmployeeListSerializer
 from .models import CustomUser
 import traceback
+import re
+
+
+def _build_company_table_name(company_name: str) -> str:
+    normalized = slugify(company_name or "").replace("-", "_")
+    normalized = re.sub(r"[^a-zA-Z0-9_]", "", normalized)
+    if not normalized:
+        normalized = "company"
+    return f"company_{normalized}"
+
+
+def _create_company_table(company_name: str) -> str:
+    table_name = _build_company_table_name(company_name)
+    quoted_table_name = connection.ops.quote_name(table_name)
+    with connection.cursor() as cursor:
+        cursor.execute(
+            f"""
+            CREATE TABLE IF NOT EXISTS {quoted_table_name} (
+                id BIGSERIAL PRIMARY KEY,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+            """
+        )
+    return table_name
 
 class UserRegistrationView(generics.CreateAPIView):
     serializer_class = UserRegistrationSerializer
@@ -12,15 +38,18 @@ class UserRegistrationView(generics.CreateAPIView):
 
     def create(self, request, *args, **kwargs):
         try:
-            serializer = self.get_serializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            user = serializer.save()
+            with transaction.atomic():
+                serializer = self.get_serializer(data=request.data)
+                serializer.is_valid(raise_exception=True)
+                user = serializer.save()
 
-            # Default signup user to HR; admin must approve before login.
-            user.role = "HR"
-            user.is_staff = True
-            user.is_approved = False
-            user.save()
+                # Company signup account is the company admin.
+                user.role = "ADMIN"
+                user.is_staff = True
+                user.is_approved = True
+                user.save()
+
+                company_table_name = _create_company_table(user.company_name)
         except Exception as e:
             # In development return the exception message and traceback to help debugging
             tb = traceback.format_exc()
@@ -33,7 +62,8 @@ class UserRegistrationView(generics.CreateAPIView):
                 "user": UserRegistrationSerializer(
                     user, context=self.get_serializer_context()
                 ).data,
-                "message": "User created successfully.",
+                "company_table": company_table_name,
+                "message": "Company admin account created successfully.",
             },
             status=status.HTTP_201_CREATED,
         )
@@ -47,7 +77,7 @@ class EmployeeListAPIView(generics.ListAPIView):
         user = self.request.user
         if user.role not in ["ADMIN", "HR"]:
             raise PermissionDenied("Permission denied")
-        return CustomUser.objects.all().order_by("date_of_joining", "id")
+        return CustomUser.objects.filter(company_name=user.company_name).order_by("date_of_joining", "id")
 
 
 class PendingHrListAPIView(generics.ListAPIView):
@@ -58,7 +88,11 @@ class PendingHrListAPIView(generics.ListAPIView):
         user = self.request.user
         if user.role != "ADMIN":
             raise PermissionDenied("Permission denied")
-        return CustomUser.objects.filter(role="HR", is_approved=False).order_by("date_of_joining", "id")
+        return CustomUser.objects.filter(
+            role="HR",
+            is_approved=False,
+            company_name=user.company_name,
+        ).order_by("date_of_joining", "id")
 
 
 class ApproveHrAPIView(generics.UpdateAPIView):
@@ -74,6 +108,8 @@ class ApproveHrAPIView(generics.UpdateAPIView):
         if request.user.role != "ADMIN":
             raise PermissionDenied("Permission denied")
         user = self.get_object()
+        if user.company_name != request.user.company_name:
+            raise PermissionDenied("Permission denied")
         if user.role != "HR":
             raise PermissionDenied("Only HR users can be approved")
         user.is_approved = True

@@ -73,6 +73,9 @@ class CreateEmployeeSerializer(serializers.Serializer):
         return value
 
     def create(self, validated_data):
+        request = self.context.get("request")
+        company_name = getattr(getattr(request, "user", None), "company_name", "")
+
         login_id = generate_login_id(
             validated_data["first_name"],
             validated_data["last_name"],
@@ -86,6 +89,7 @@ class CreateEmployeeSerializer(serializers.Serializer):
             email=validated_data["email"],
             first_name=validated_data["first_name"],
             last_name=validated_data["last_name"],
+            company_name=company_name,
             role=validated_data["role"],
             date_of_joining=validated_data["date_of_joining"],
             department=validated_data.get("department", ""),
