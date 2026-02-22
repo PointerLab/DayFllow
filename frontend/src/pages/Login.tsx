@@ -44,10 +44,10 @@ const Login: React.FC = () => {
       } else {
         navigate('/dashboard/employee');
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Login failed',
-        description: 'Invalid email or password. Password must be at least 8 characters.',
+        description: error?.message || 'Invalid email or password.',
         variant: 'destructive',
       });
     } finally {

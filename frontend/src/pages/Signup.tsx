@@ -16,7 +16,7 @@ const Signup: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { signup, login } = useAuth();
+  const { signup } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -44,9 +44,7 @@ const Signup: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Debug: Check what is being sent to the backend
-      console.log('Sending signup data:', { first_name: firstName, last_name: lastName, email });
-      const res = await signup({
+      await signup({
         first_name: firstName,
         last_name: lastName,
         email,
@@ -54,25 +52,9 @@ const Signup: React.FC = () => {
       });
       toast({
         title: 'Account created!',
-        description: 'Welcome to Dayflow. Signing you in now...',
+        description: 'Your account has been created. Please login to continue.',
       });
-
-      // Auto-login so the user is authenticated and sees their entered details
-      const user = await login(email, password);
-
-      if (user?.role === 'ADMIN' || user?.role === 'HR') {
-        navigate('/dashboard/admin', {
-          state: {
-            first_name: firstName,
-            last_name: lastName,
-            email: email,
-          },
-        });
-      } else if (user?.role === 'EMP') {
-        navigate('/dashboard/employee');
-      } else {
-        navigate('/login');
-      }
+      navigate('/login');
     } catch (error: any) {
       const message = error?.message || 'An error occurred. Please try again.';
       toast({
