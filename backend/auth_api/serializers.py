@@ -3,7 +3,9 @@ from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from accounts.models import CustomUser
 from accounts.utils import generate_login_id, generate_temp_password
+from accounts.company_table_service import insert_company_user_row
 from django.contrib.auth.hashers import make_password
+from django.db import transaction
 from django.conf import settings
 
 class LoginSerializer(serializers.Serializer):
@@ -75,27 +77,38 @@ class CreateEmployeeSerializer(serializers.Serializer):
     def create(self, validated_data):
         request = self.context.get("request")
         company_name = getattr(getattr(request, "user", None), "company_name", "")
+        role = validated_data["role"]
+        employment_type = validated_data.get("employment_type", "")
+        if role == "HR":
+            employment_type = ""
 
-        login_id = generate_login_id(
-            validated_data["first_name"],
-            validated_data["last_name"],
-            validated_data["date_of_joining"],
-        )
+        with transaction.atomic():
+            login_id = generate_login_id(
+                validated_data["first_name"],
+                validated_data["last_name"],
+                validated_data["date_of_joining"],
+            )
 
-        temp_password = generate_temp_password()
+            temp_password = generate_temp_password()
 
-        user = CustomUser.objects.create(
-            login_id=login_id,
-            email=validated_data["email"],
-            first_name=validated_data["first_name"],
-            last_name=validated_data["last_name"],
-            company_name=company_name,
-            role=validated_data["role"],
-            date_of_joining=validated_data["date_of_joining"],
-            department=validated_data.get("department", ""),
-            employment_type=validated_data.get("employment_type", ""),
-            password=make_password(temp_password),
-            must_change_password=True,
-        )
+            user = CustomUser.objects.create(
+                login_id=login_id,
+                email=validated_data["email"],
+                first_name=validated_data["first_name"],
+                last_name=validated_data["last_name"],
+                company_name=company_name,
+                role=role,
+                date_of_joining=validated_data["date_of_joining"],
+                department=validated_data.get("department", ""),
+                employment_type=employment_type,
+                password=make_password(temp_password),
+                must_change_password=True,
+            )
+
+            insert_company_user_row(
+                company_name=company_name,
+                user=user,
+                created_by_user_id=getattr(getattr(request, "user", None), "id", None),
+            )
 
         return user, temp_password

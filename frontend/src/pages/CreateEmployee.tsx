@@ -29,7 +29,7 @@ const CreateEmployee: React.FC = () => {
         role,
         date_of_joining: dateOfJoining,
         department: department || undefined,
-        employment_type: employmentType || undefined,
+        employment_type: role === 'HR' ? undefined : (employmentType || undefined),
       });
 
       setCreated({
@@ -106,11 +106,18 @@ const CreateEmployee: React.FC = () => {
                 <label className="block text-sm font-medium text-foreground mb-2">Role</label>
                 <select
                   value={role}
-                  onChange={(e) => setRole(e.target.value as 'EMP' | 'INT' | 'HR')}
+                  onChange={(e) => {
+                    const nextRole = e.target.value as 'EMP' | 'INT' | 'HR';
+                    setRole(nextRole);
+                    if (nextRole === 'HR') {
+                      setEmploymentType('');
+                    }
+                  }}
                   className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="EMP">Employee</option>
                   <option value="INT">Intern</option>
+                  <option value="HR">HR</option>
                 </select>
               </div>
               <div className="w-1/2">
@@ -136,16 +143,18 @@ const CreateEmployee: React.FC = () => {
                   placeholder="Engineering"
                 />
               </div>
-              <div className="w-1/2">
-                <label className="block text-sm font-medium text-foreground mb-2">Employment Type</label>
-                <input
-                  type="text"
-                  value={employmentType}
-                  onChange={(e) => setEmploymentType(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                  placeholder="Full-time"
-                />
-              </div>
+              {role !== 'HR' && (
+                <div className="w-1/2">
+                  <label className="block text-sm font-medium text-foreground mb-2">Employment Type</label>
+                  <input
+                    type="text"
+                    value={employmentType}
+                    onChange={(e) => setEmploymentType(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                    placeholder="Full-time"
+                  />
+                </div>
+              )}
             </div>
 
             <div className="flex items-center gap-3">

@@ -2,35 +2,11 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
-from django.db import connection, transaction
-from django.utils.text import slugify
+from django.db import transaction
 from .serializers import UserRegistrationSerializer, EmployeeListSerializer
 from .models import CustomUser
+from .company_table_service import ensure_company_table, insert_company_user_row
 import traceback
-import re
-
-
-def _build_company_table_name(company_name: str) -> str:
-    normalized = slugify(company_name or "").replace("-", "_")
-    normalized = re.sub(r"[^a-zA-Z0-9_]", "", normalized)
-    if not normalized:
-        normalized = "company"
-    return f"company_{normalized}"
-
-
-def _create_company_table(company_name: str) -> str:
-    table_name = _build_company_table_name(company_name)
-    quoted_table_name = connection.ops.quote_name(table_name)
-    with connection.cursor() as cursor:
-        cursor.execute(
-            f"""
-            CREATE TABLE IF NOT EXISTS {quoted_table_name} (
-                id BIGSERIAL PRIMARY KEY,
-                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-            )
-            """
-        )
-    return table_name
 
 class UserRegistrationView(generics.CreateAPIView):
     serializer_class = UserRegistrationSerializer
@@ -49,7 +25,12 @@ class UserRegistrationView(generics.CreateAPIView):
                 user.is_approved = True
                 user.save()
 
-                company_table_name = _create_company_table(user.company_name)
+                company_table_name = ensure_company_table(user.company_name)
+                insert_company_user_row(
+                    company_name=user.company_name,
+                    user=user,
+                    created_by_user_id=None,
+                )
         except Exception as e:
             # In development return the exception message and traceback to help debugging
             tb = traceback.format_exc()
