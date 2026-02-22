@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { createEmployee } from '@/api/employees';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 const CreateEmployee: React.FC = () => {
   const [firstName, setFirstName] = useState('');
@@ -16,6 +17,8 @@ const CreateEmployee: React.FC = () => {
   const [created, setCreated] = useState<{ login_id: string; temporary_password: string } | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const canCreateHr = user?.role === 'ADMIN';
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -117,7 +120,7 @@ const CreateEmployee: React.FC = () => {
                 >
                   <option value="EMP">Employee</option>
                   <option value="INT">Intern</option>
-                  <option value="HR">HR</option>
+                  {canCreateHr && <option value="HR">HR</option>}
                 </select>
               </div>
               <div className="w-1/2">

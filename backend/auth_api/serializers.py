@@ -74,6 +74,13 @@ class CreateEmployeeSerializer(serializers.Serializer):
             raise serializers.ValidationError("A user with this email already exists.")
         return value
 
+    def validate_role(self, value):
+        request = self.context.get("request")
+        creator_role = getattr(getattr(request, "user", None), "role", None)
+        if creator_role == "HR" and value == "HR":
+            raise serializers.ValidationError("HR users cannot create HR accounts.")
+        return value
+
     def create(self, validated_data):
         request = self.context.get("request")
         company_name = getattr(getattr(request, "user", None), "company_name", "")
