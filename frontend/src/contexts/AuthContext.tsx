@@ -5,6 +5,7 @@ interface User {
   first_name: string;
   last_name: string;
   email: string;
+  company_name?: string;
   role: 'ADMIN' | 'HR' | 'EMP' | 'INT';
   login_id: string;
   date_of_joining?: string;
@@ -40,6 +41,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       first_name: data.first_name ?? userDetails?.first_name ?? '',
       last_name: data.last_name ?? userDetails?.last_name ?? '',
       email: data.email ?? userDetails?.email ?? loginId,
+      company_name: data.company_name ?? userDetails?.company_name ?? '',
       date_of_joining: data.date_of_joining ?? userDetails?.date_of_joining,
       department: data.department ?? userDetails?.department ?? '',
       employment_type: data.employment_type ?? userDetails?.employment_type ?? '',

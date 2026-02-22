@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 const Signup: React.FC = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [companyName, setCompanyName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -16,7 +17,7 @@ const Signup: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { signup, login } = useAuth();
+  const { signup } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -44,35 +45,18 @@ const Signup: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Debug: Check what is being sent to the backend
-      console.log('Sending signup data:', { first_name: firstName, last_name: lastName, email });
-      const res = await signup({
+      await signup({
         first_name: firstName,
         last_name: lastName,
+        company_name: companyName,
         email,
         password,
       });
       toast({
         title: 'Account created!',
-        description: 'Welcome to Dayflow. Signing you in now...',
+        description: 'Your account has been created. Please login to continue.',
       });
-
-      // Auto-login so the user is authenticated and sees their entered details
-      const user = await login(email, password);
-
-      if (user?.role === 'ADMIN' || user?.role === 'HR') {
-        navigate('/dashboard/admin', {
-          state: {
-            first_name: firstName,
-            last_name: lastName,
-            email: email,
-          },
-        });
-      } else if (user?.role === 'EMP') {
-        navigate('/dashboard/employee');
-      } else {
-        navigate('/login');
-      }
+      navigate('/login');
     } catch (error: any) {
       const message = error?.message || 'An error occurred. Please try again.';
       toast({
@@ -140,6 +124,23 @@ const Signup: React.FC = () => {
             </div>
           </div>
 
+
+          {/* Company Name */}
+          <div>
+            <label htmlFor="companyName" className="block text-sm font-medium text-foreground mb-2">
+              Company Name
+            </label>
+            <input
+              id="companyName"
+              type="text"
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              placeholder="Acme Inc."
+              className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              required
+              autoComplete="organization"
+            />
+          </div>
 
           {/* Work Email */}
           <div>
