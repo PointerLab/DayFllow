@@ -50,7 +50,9 @@ class AdminDashboardAPIView(APIView):
         today = date.today()
 
         data = {
-            "total_employees": CustomUser.objects.filter(role="EMP").count(),
+            "total_employees": CustomUser.objects.filter(
+                company_name=request.user.company_name
+            ).exclude(role="ADMIN").count(),
             "present_today": Attendance.objects.filter(
                 date=today, status="PRESENT"
             ).count(),
