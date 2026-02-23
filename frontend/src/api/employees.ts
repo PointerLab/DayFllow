@@ -1,7 +1,8 @@
 import { apiGet, apiPost } from "@/api/client";
 
-export const fetchEmployees = async () => {
-  return apiGet("/accounts/employees/");
+export const fetchEmployees = async (scope?: "non_admin" | "employees_only") => {
+  const query = scope ? `?scope=${scope}` : "";
+  return apiGet(`/accounts/employees/${query}`);
 };
 
 export const createEmployee = async (payload: {

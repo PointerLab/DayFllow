@@ -21,6 +21,7 @@ const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
 
   const isAdmin = user?.role === "ADMIN" || user?.role === "HR";
+  const employeesPagePath = user?.role === "ADMIN" ? "/employees/admin" : "/employees";
 
   useEffect(() => {
     let mounted = true;
@@ -150,7 +151,7 @@ const AdminDashboard: React.FC = () => {
             </button>
             <button
               className="w-full px-4 py-2 rounded-lg bg-accent text-accent-foreground font-medium"
-              onClick={() => navigate("/employees")}
+              onClick={() => navigate(employeesPagePath)}
             >
               View Employees
             </button>

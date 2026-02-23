@@ -58,4 +58,14 @@ class EmployeeListAPIView(generics.ListAPIView):
         user = self.request.user
         if user.role not in ["ADMIN", "HR"]:
             raise PermissionDenied("Permission denied")
-        return CustomUser.objects.filter(company_name=user.company_name).order_by("date_of_joining", "id")
+        queryset = CustomUser.objects.filter(company_name=user.company_name)
+        scope = self.request.query_params.get("scope")
+
+        if scope == "non_admin":
+            if user.role != "ADMIN":
+                raise PermissionDenied("Permission denied")
+            queryset = queryset.exclude(role="ADMIN")
+        elif scope == "employees_only":
+            queryset = queryset.filter(role="EMP")
+
+        return queryset.order_by("date_of_joining", "id")

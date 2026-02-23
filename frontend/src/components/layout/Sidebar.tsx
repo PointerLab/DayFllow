@@ -39,13 +39,17 @@ export const Sidebar: React.FC = () => {
     return isAdmin ? '/profile/admin' : '/profile/employee';
   };
 
+  const getEmployeesLink = () => {
+    return user?.role === 'ADMIN' ? '/employees/admin' : '/employees';
+  };
+
   const navItems = [
     {
       to: isAdmin ? '/dashboard/admin' : '/dashboard/employee',
       icon: LayoutDashboard,
       label: 'Dashboard',
     },
-    ...(isAdmin ? [{ to: '/employees', icon: Users, label: 'Employees' }] : []),
+    ...(isAdmin ? [{ to: getEmployeesLink(), icon: Users, label: 'Employees' }] : []),
     { to: getAttendanceLink(), icon: Clock, label: 'Attendance' },
     { to: getLeavesLink(), icon: Calendar, label: 'Leaves' },
   ];
