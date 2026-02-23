@@ -58,43 +58,14 @@ class EmployeeListAPIView(generics.ListAPIView):
         user = self.request.user
         if user.role not in ["ADMIN", "HR"]:
             raise PermissionDenied("Permission denied")
-        return CustomUser.objects.filter(company_name=user.company_name).order_by("date_of_joining", "id")
+        queryset = CustomUser.objects.filter(company_name=user.company_name)
+        scope = self.request.query_params.get("scope")
 
+        if scope == "non_admin":
+            if user.role != "ADMIN":
+                raise PermissionDenied("Permission denied")
+            queryset = queryset.exclude(role="ADMIN")
+        elif scope == "employees_only":
+            queryset = queryset.filter(role="EMP")
 
-class PendingHrListAPIView(generics.ListAPIView):
-    serializer_class = EmployeeListSerializer
-    permission_classes = (IsAuthenticated,)
-
-    def get_queryset(self):
-        user = self.request.user
-        if user.role != "ADMIN":
-            raise PermissionDenied("Permission denied")
-        return CustomUser.objects.filter(
-            role="HR",
-            is_approved=False,
-            company_name=user.company_name,
-        ).order_by("date_of_joining", "id")
-
-
-class ApproveHrAPIView(generics.UpdateAPIView):
-    serializer_class = EmployeeListSerializer
-    permission_classes = (IsAuthenticated,)
-    queryset = CustomUser.objects.all()
-
-    def post(self, request, *args, **kwargs):
-        # Frontend triggers this approval action with POST.
-        return self.update(request, *args, **kwargs)
-
-    def update(self, request, *args, **kwargs):
-        if request.user.role != "ADMIN":
-            raise PermissionDenied("Permission denied")
-        user = self.get_object()
-        if user.company_name != request.user.company_name:
-            raise PermissionDenied("Permission denied")
-        if user.role != "HR":
-            raise PermissionDenied("Only HR users can be approved")
-        user.is_approved = True
-        user.is_active = True
-        user.save()
-        serializer = self.get_serializer(user)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return queryset.order_by("date_of_joining", "id")

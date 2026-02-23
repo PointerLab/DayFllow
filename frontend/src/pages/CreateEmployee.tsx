@@ -19,6 +19,7 @@ const CreateEmployee: React.FC = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const canCreateHr = user?.role === 'ADMIN';
+  const employeesPagePath = user?.role === 'ADMIN' ? '/employees/admin' : '/employees';
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -57,7 +58,7 @@ const CreateEmployee: React.FC = () => {
   };
 
   const handleGoToEmployees = () => {
-    navigate('/employees', { state: { refreshKey: Date.now() } });
+    navigate(employeesPagePath, { state: { refreshKey: Date.now() } });
   };
 
   return (
@@ -170,7 +171,7 @@ const CreateEmployee: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => navigate('/employees')}
+                onClick={() => navigate(employeesPagePath)}
                 className="px-5 py-2.5 rounded-xl border border-border text-foreground hover:bg-accent transition-colors"
               >
                 Cancel

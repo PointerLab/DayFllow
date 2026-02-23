@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Users, Clock, Calendar, LogOut, LayoutDashboard, ShieldCheck } from 'lucide-react';
+import { Users, Clock, Calendar, LogOut, LayoutDashboard } from 'lucide-react';
 import { AvatarWithBadge } from '../Avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import dayflowLogo from '../../assets/dayflow-logo.png';
@@ -9,7 +9,6 @@ export const Sidebar: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'HR';
-  const isAdminOnly = user?.role === 'ADMIN';
   const displayName =
     [user?.first_name, user?.last_name].filter(Boolean).join(' ') ||
     user?.login_id ||
@@ -40,14 +39,17 @@ export const Sidebar: React.FC = () => {
     return isAdmin ? '/profile/admin' : '/profile/employee';
   };
 
+  const getEmployeesLink = () => {
+    return user?.role === 'ADMIN' ? '/employees/admin' : '/employees';
+  };
+
   const navItems = [
     {
       to: isAdmin ? '/dashboard/admin' : '/dashboard/employee',
       icon: LayoutDashboard,
       label: 'Dashboard',
     },
-    ...(isAdminOnly ? [{ to: '/hr-approvals', icon: ShieldCheck, label: 'HR Approvals' }] : []),
-    ...(isAdmin ? [{ to: '/employees', icon: Users, label: 'Employees' }] : []),
+    ...(isAdmin ? [{ to: getEmployeesLink(), icon: Users, label: 'Employees' }] : []),
     { to: getAttendanceLink(), icon: Clock, label: 'Attendance' },
     { to: getLeavesLink(), icon: Calendar, label: 'Leaves' },
   ];

@@ -50,7 +50,9 @@ class AdminDashboardAPIView(APIView):
         today = date.today()
 
         data = {
-            "total_employees": CustomUser.objects.filter(role="EMP").count(),
+            "total_employees": CustomUser.objects.filter(
+                company_name=request.user.company_name
+            ).exclude(role="ADMIN").count(),
             "present_today": Attendance.objects.filter(
                 date=today, status="PRESENT"
             ).count(),
@@ -104,19 +106,6 @@ class DashboardNotificationsAPIView(APIView):
                         "message": f"{pending_leaves} leave request(s) are waiting for review.",
                         "time": "Updated now",
                         "tone": "warning",
-                        "read": False,
-                    }
-                )
-
-            pending_hr = CustomUser.objects.filter(role="HR", is_approved=False).count()
-            if pending_hr > 0 and user.role == "ADMIN":
-                items.append(
-                    {
-                        "id": "pending-hr-approvals",
-                        "title": "HR approvals pending",
-                        "message": f"{pending_hr} HR account request(s) are waiting for approval.",
-                        "time": "Updated now",
-                        "tone": "info",
                         "read": False,
                     }
                 )

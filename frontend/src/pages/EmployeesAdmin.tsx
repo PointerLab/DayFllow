@@ -18,21 +18,24 @@ interface Employee {
   is_active: boolean;
 }
 
-const Employees: React.FC = () => {
+const EmployeesAdmin: React.FC = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedRole, setSelectedRole] = useState('all');
   const [selectedEmployees, setSelectedEmployees] = useState<number[]>([]);
   const navigate = useNavigate();
   const location = useLocation();
+
+  const roles = ['all', 'HR', 'EMP', 'INT'];
 
   useEffect(() => {
     let isMounted = true;
 
     const loadEmployees = async () => {
       try {
-        const data = await fetchEmployees('employees_only');
+        const data = await fetchEmployees('non_admin');
         if (isMounted) {
           setEmployees(data);
         }
@@ -55,11 +58,11 @@ const Employees: React.FC = () => {
 
   const filteredEmployees = employees.filter(emp => {
     const fullName = `${emp.first_name} ${emp.last_name}`.trim().toLowerCase();
-    return (
-      fullName.includes(searchQuery.toLowerCase()) ||
+    const matchesSearch = fullName.includes(searchQuery.toLowerCase()) ||
       emp.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      emp.login_id.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+      emp.login_id.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesRole = selectedRole === 'all' || emp.role === selectedRole;
+    return matchesSearch && matchesRole;
   });
 
   const toggleSelectAll = () => {
@@ -78,6 +81,20 @@ const Employees: React.FC = () => {
 
   const clearFilters = () => {
     setSearchQuery('');
+    setSelectedRole('all');
+  };
+
+  const handleRowClick = (employee: Employee) => {
+    const isEmployee = employee.role === 'EMP' || employee.role === 'INT';
+    navigate(isEmployee ? '/profile/employee' : '/profile/admin');
+  };
+
+  const getRoleBadgeType = (role: Employee['role']) =>
+    role === 'EMP' || role === 'INT' ? 'employee' : 'admin';
+  const getRoleLabel = (role: Employee['role']) => {
+    if (role === 'HR') return 'HR';
+    if (role === 'INT') return 'Intern';
+    return 'Employee';
   };
 
   const getStatusLabel = (active: boolean) => (active ? 'Active' : 'Inactive');
@@ -88,13 +105,13 @@ const Employees: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header breadcrumb="Employees" subtitle="Normal employees only" />
+      <Header breadcrumb="Employees Admin" subtitle="All company users except admin" />
 
       <div className="p-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-foreground">Employees</h2>
-            <p className="text-muted-foreground">Showing only normal employees</p>
+            <h2 className="text-2xl font-bold text-foreground">Employees Admin</h2>
+            <p className="text-muted-foreground">Manage all non-admin users</p>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -125,6 +142,17 @@ const Employees: React.FC = () => {
             </div>
 
             <div className="flex flex-wrap gap-3">
+              <select
+                value={selectedRole}
+                onChange={(e) => setSelectedRole(e.target.value)}
+                className="px-4 py-2.5 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary capitalize"
+              >
+                <option value="all">All Roles</option>
+                {roles.slice(1).map(role => (
+                  <option key={role} value={role} className="capitalize">{role}</option>
+                ))}
+              </select>
+
               <button
                 onClick={clearFilters}
                 className="px-4 py-2.5 text-muted-foreground hover:text-foreground transition-colors"
@@ -151,6 +179,7 @@ const Employees: React.FC = () => {
                   <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Employee</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Employee ID</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Department</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Role</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Type</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Status</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Joining Date</th>
@@ -160,19 +189,19 @@ const Employees: React.FC = () => {
               <tbody className="divide-y divide-border">
                 {isLoading ? (
                   <tr>
-                    <td className="px-4 py-10 text-center text-sm text-muted-foreground" colSpan={8}>
+                    <td className="px-4 py-10 text-center text-sm text-muted-foreground" colSpan={9}>
                       Loading employees...
                     </td>
                   </tr>
                 ) : error ? (
                   <tr>
-                    <td className="px-4 py-10 text-center text-sm text-error" colSpan={8}>
+                    <td className="px-4 py-10 text-center text-sm text-error" colSpan={9}>
                       {error}
                     </td>
                   </tr>
                 ) : filteredEmployees.length === 0 ? (
                   <tr>
-                    <td className="px-4 py-10 text-center text-sm text-muted-foreground" colSpan={8}>
+                    <td className="px-4 py-10 text-center text-sm text-muted-foreground" colSpan={9}>
                       No employees yet. Add employees to see them here.
                     </td>
                   </tr>
@@ -183,7 +212,7 @@ const Employees: React.FC = () => {
                       <tr
                         key={employee.id}
                         className="hover:bg-muted/30 transition-colors cursor-pointer"
-                        onClick={() => navigate('/profile/employee')}
+                        onClick={() => handleRowClick(employee)}
                       >
                         <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
                           <input
@@ -197,7 +226,7 @@ const Employees: React.FC = () => {
                           <div className="flex items-center gap-3">
                             <AvatarWithBadge
                               name={fullName}
-                              role="employee"
+                              role={getRoleBadgeType(employee.role)}
                               size="sm"
                             />
                             <div>
@@ -208,6 +237,7 @@ const Employees: React.FC = () => {
                         </td>
                         <td className="px-4 py-4 text-sm text-foreground font-mono">{employee.login_id}</td>
                         <td className="px-4 py-4 text-sm text-foreground">{employee.department || '--'}</td>
+                        <td className="px-4 py-4 text-sm text-foreground">{getRoleLabel(employee.role)}</td>
                         <td className="px-4 py-4 text-sm text-foreground">{employee.employment_type || '--'}</td>
                         <td className="px-4 py-4">
                           <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getStatusClass(employee.is_active)}`}>
@@ -250,4 +280,4 @@ const Employees: React.FC = () => {
   );
 };
 
-export default Employees;
+export default EmployeesAdmin;
