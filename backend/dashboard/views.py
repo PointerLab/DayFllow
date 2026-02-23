@@ -108,19 +108,6 @@ class DashboardNotificationsAPIView(APIView):
                     }
                 )
 
-            pending_hr = CustomUser.objects.filter(role="HR", is_approved=False).count()
-            if pending_hr > 0 and user.role == "ADMIN":
-                items.append(
-                    {
-                        "id": "pending-hr-approvals",
-                        "title": "HR approvals pending",
-                        "message": f"{pending_hr} HR account request(s) are waiting for approval.",
-                        "time": "Updated now",
-                        "tone": "info",
-                        "read": False,
-                    }
-                )
-
             latest_leaves = LeaveRequest.objects.select_related("user").order_by("-created_at")[:3]
             for leave in latest_leaves:
                 name = (
