@@ -5,16 +5,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface EmployeeDashboardStats {
   today_status: string;
+  today_check_in: string | null;
+  today_check_out: string | null;
   present_days: number;
   leave_days: number;
   pending_leaves: number;
 }
 
-const statusLabel = (status: string) => {
+const statusLabel = (status: string, checkIn: string | null, checkOut: string | null) => {
   const normalized = status?.toUpperCase();
-  if (normalized === "PRESENT") return "Check In";
-  if (normalized === "LEAVE" || normalized === "ABSENT" || normalized === "HALF_DAY") return "Check Out";
-  return status || "Unknown";
+  if (checkOut) return "Check Out";
+  if (checkIn) return "Check In";
+  if (normalized === "LEAVE") return "On Leave";
+  if (normalized === "PENDING" || normalized === "ABSENT") return "Pending";
+  return "Pending";
 };
 
 const EmployeeDashboard: React.FC = () => {
@@ -63,7 +67,11 @@ const EmployeeDashboard: React.FC = () => {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-semibold text-foreground">
-              {loading ? "—" : statusLabel(stats?.today_status || "")}
+              {loading ? "—" : statusLabel(
+                stats?.today_status || "",
+                stats?.today_check_in ?? null,
+                stats?.today_check_out ?? null,
+              )}
             </p>
           </CardContent>
         </Card>

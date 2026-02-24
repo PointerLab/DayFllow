@@ -26,7 +26,9 @@ class EmployeeDashboardAPIView(APIView):
         )
 
         data = {
-            "today_status": today_attendance.status if today_attendance else "ABSENT",
+            "today_status": today_attendance.status if today_attendance else "PENDING",
+            "today_check_in": today_attendance.check_in if today_attendance else None,
+            "today_check_out": today_attendance.check_out if today_attendance else None,
             "present_days": month_attendance.filter(status="PRESENT").count(),
             "leave_days": month_attendance.filter(status="LEAVE").count(),
             "pending_leaves": LeaveRequest.objects.filter(
