@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Users, Clock, Calendar, LogOut, LayoutDashboard } from 'lucide-react';
+import { Users, Clock, Calendar, LogOut, LayoutDashboard, Settings } from 'lucide-react';
 import { AvatarWithBadge } from '../Avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import dayflowLogo from '../../assets/dayflow-logo.png';
@@ -50,6 +50,7 @@ export const Sidebar: React.FC = () => {
       label: 'Dashboard',
     },
     ...(isAdmin ? [{ to: getEmployeesLink(), icon: Users, label: 'Employees' }] : []),
+    ...(user?.role === 'ADMIN' ? [{ to: '/company/setup', icon: Settings, label: 'Company Setup' }] : []),
     { to: getAttendanceLink(), icon: Clock, label: 'Attendance' },
     { to: getLeavesLink(), icon: Calendar, label: 'Leaves' },
   ];

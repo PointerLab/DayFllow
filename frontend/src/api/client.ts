@@ -62,3 +62,20 @@ export const apiPost = async (path: string, body: unknown) => {
 
   return response.json();
 };
+
+export const apiPut = async (path: string, body: unknown) => {
+  const response = await fetch(`${BASE_URL}${path}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseError(response));
+  }
+
+  return response.json();
+};

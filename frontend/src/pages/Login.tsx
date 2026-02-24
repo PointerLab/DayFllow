@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import dayflowLogo from '@/assets/dayflow-logo.png';
 import { useAuth } from '@/contexts/AuthContext';
 import { Switch } from '@/components/ui/switch';
+import { fetchCompanyConfig } from '@/api/companyConfig';
 
 const Login: React.FC = () => {
   const [loginId, setLoginId] = useState('');
@@ -39,6 +40,22 @@ const Login: React.FC = () => {
           });
           logout();
           return;
+        }
+        if (user?.role === 'ADMIN') {
+          try {
+            const config = await fetchCompanyConfig();
+            const isConfigured =
+              (config.departments?.length ?? 0) > 0 &&
+              (config.roles?.length ?? 0) > 0 &&
+              (config.employment_types?.length ?? 0) > 0;
+            if (!isConfigured) {
+              navigate('/company/setup');
+              return;
+            }
+          } catch {
+            navigate('/company/setup');
+            return;
+          }
         }
         navigate('/dashboard/admin');
       } else {

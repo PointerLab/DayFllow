@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { createEmployee } from '@/api/employees';
+import { fetchCompanyConfig } from '@/api/companyConfig';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -13,6 +14,10 @@ const CreateEmployee: React.FC = () => {
   const [dateOfJoining, setDateOfJoining] = useState('');
   const [department, setDepartment] = useState('');
   const [employmentType, setEmploymentType] = useState('');
+  const [departmentOptions, setDepartmentOptions] = useState<string[]>([]);
+  const [roleOptions, setRoleOptions] = useState<Array<'EMP' | 'INT' | 'HR'>>(['EMP', 'INT', 'HR']);
+  const [employmentTypeOptions, setEmploymentTypeOptions] = useState<string[]>([]);
+  const [isConfigLoading, setIsConfigLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [created, setCreated] = useState<{ login_id: string; temporary_password: string } | null>(null);
   const navigate = useNavigate();
@@ -20,9 +25,65 @@ const CreateEmployee: React.FC = () => {
   const { user } = useAuth();
   const canCreateHr = user?.role === 'ADMIN';
   const employeesPagePath = user?.role === 'ADMIN' ? '/employees/admin' : '/employees';
+  const hasConfigOptions = useMemo(
+    () => departmentOptions.length > 0 && roleOptions.length > 0 && employmentTypeOptions.length > 0,
+    [departmentOptions.length, roleOptions.length, employmentTypeOptions.length],
+  );
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadCompanyConfig = async () => {
+      setIsConfigLoading(true);
+      try {
+        const config = await fetchCompanyConfig();
+        if (!mounted) return;
+
+        const roles = (config.roles || []).filter((item): item is 'EMP' | 'INT' | 'HR' =>
+          item === 'EMP' || item === 'INT' || item === 'HR',
+        );
+        setDepartmentOptions(config.departments || []);
+        setRoleOptions(roles.length ? roles : ['EMP', 'INT', 'HR']);
+        setEmploymentTypeOptions(config.employment_types || []);
+
+        if ((config.departments || []).length > 0) {
+          setDepartment((current) => current || config.departments[0]);
+        }
+        if (roles.length > 0) {
+          setRole((current) => (roles.includes(current) ? current : roles[0]));
+        }
+        if ((config.employment_types || []).length > 0) {
+          setEmploymentType((current) => current || config.employment_types[0]);
+        }
+      } catch (error: any) {
+        if (mounted) {
+          toast({
+            title: 'Company setup required',
+            description: error?.message || 'Please complete company setup first.',
+            variant: 'destructive',
+          });
+        }
+      } finally {
+        if (mounted) setIsConfigLoading(false);
+      }
+    };
+
+    loadCompanyConfig();
+    return () => {
+      mounted = false;
+    };
+  }, [toast]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (!hasConfigOptions) {
+      toast({
+        title: 'Company setup required',
+        description: 'Please add departments, roles, and employment types in Company Setup.',
+        variant: 'destructive',
+      });
+      return;
+    }
     setIsLoading(true);
 
     try {
@@ -119,9 +180,13 @@ const CreateEmployee: React.FC = () => {
                   }}
                   className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 >
-                  <option value="EMP">Employee</option>
-                  <option value="INT">Intern</option>
-                  {canCreateHr && <option value="HR">HR</option>}
+                  {roleOptions
+                    .filter((option) => (option === 'HR' ? canCreateHr : true))
+                    .map((option) => (
+                      <option key={option} value={option}>
+                        {option === 'EMP' ? 'Employee' : option === 'INT' ? 'Intern' : 'HR'}
+                      </option>
+                    ))}
                 </select>
               </div>
               <div className="w-1/2">
@@ -139,32 +204,42 @@ const CreateEmployee: React.FC = () => {
             <div className="flex gap-4">
               <div className="w-1/2">
                 <label className="block text-sm font-medium text-foreground mb-2">Department</label>
-                <input
-                  type="text"
+                <select
                   value={department}
                   onChange={(e) => setDepartment(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                  placeholder="Engineering"
-                />
+                  className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  {departmentOptions.map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
               </div>
               {role !== 'HR' && (
                 <div className="w-1/2">
                   <label className="block text-sm font-medium text-foreground mb-2">Employment Type</label>
-                  <input
-                    type="text"
+                  <select
                     value={employmentType}
                     onChange={(e) => setEmploymentType(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                    placeholder="Full-time"
-                  />
+                    className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    {employmentTypeOptions.map((option) => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
                 </div>
               )}
             </div>
 
+            {!isConfigLoading && !hasConfigOptions && (
+              <p className="text-sm text-destructive">
+                Company setup is incomplete. Ask admin to fill departments, roles, and employment types.
+              </p>
+            )}
+
             <div className="flex items-center gap-3">
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || isConfigLoading || !hasConfigOptions}
                 className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors disabled:opacity-60"
               >
                 {isLoading ? 'Creating...' : 'Create Employee'}

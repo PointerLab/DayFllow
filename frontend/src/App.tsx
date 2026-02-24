@@ -19,6 +19,7 @@ import AdminAttendance from "./pages/AdminAttendance";
 import EmployeeAttendance from "./pages/EmployeeAttendance";
 import AdminLeaves from "./pages/AdminLeaves";
 import EmployeeLeaves from "./pages/EmployeeLeaves";
+import CompanySetup from "./pages/CompanySetup";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,7 @@ const App = () => (
               <Route path="/employees" element={<Employees />} />
               <Route path="/employees/admin" element={<EmployeesAdmin />} />
               <Route path="/employees/new" element={<CreateEmployee />} />
+              <Route path="/company/setup" element={<CompanySetup />} />
               <Route path="/profile/admin" element={<AdminProfile />} />
               <Route path="/profile/employee" element={<EmployeeProfile />} />
               <Route path="/attendance/admin" element={<AdminAttendance />} />
