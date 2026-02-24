@@ -56,16 +56,23 @@ class AdminDashboardAPIView(APIView):
                 company_name=request.user.company_name
             ).exclude(role="ADMIN").count(),
             "present_today": Attendance.objects.filter(
-                date=today, status="PRESENT"
+                date=today,
+                status="PRESENT",
+                user__company_name=request.user.company_name,
             ).count(),
             "absent_today": Attendance.objects.filter(
-                date=today, status="ABSENT"
+                date=today,
+                status="ABSENT",
+                user__company_name=request.user.company_name,
             ).count(),
             "on_leave_today": Attendance.objects.filter(
-                date=today, status="LEAVE"
+                date=today,
+                status="LEAVE",
+                user__company_name=request.user.company_name,
             ).count(),
             "pending_leaves": LeaveRequest.objects.filter(
-                status="PENDING"
+                status="PENDING",
+                user__company_name=request.user.company_name,
             ).count(),
         }
 
@@ -99,7 +106,10 @@ class DashboardNotificationsAPIView(APIView):
         items = []
 
         if user.role in ["ADMIN", "HR"]:
-            pending_leaves = LeaveRequest.objects.filter(status="PENDING").count()
+            pending_leaves = LeaveRequest.objects.filter(
+                status="PENDING",
+                user__company_name=user.company_name,
+            ).count()
             if pending_leaves > 0:
                 items.append(
                     {
@@ -112,7 +122,9 @@ class DashboardNotificationsAPIView(APIView):
                     }
                 )
 
-            latest_leaves = LeaveRequest.objects.select_related("user").order_by("-created_at")[:3]
+            latest_leaves = LeaveRequest.objects.filter(
+                user__company_name=user.company_name,
+            ).select_related("user").order_by("-created_at")[:3]
             for leave in latest_leaves:
                 name = (
                     f"{leave.user.first_name} {leave.user.last_name}".strip()
