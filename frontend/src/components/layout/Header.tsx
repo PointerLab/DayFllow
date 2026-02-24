@@ -42,13 +42,14 @@ export const Header: React.FC<HeaderProps> = ({ breadcrumb, subtitle }) => {
 
       {/* Right Section */}
       <div className="flex items-center gap-4">
-        {/* Attendance Status Toggle */}
-        <button 
-          onClick={handleToggleAttendance}
-          className="transition-transform hover:scale-105"
-        >
-          <StatusBadge status={attendanceState} />
-        </button>
+        {!isAdmin && (
+          <button
+            onClick={handleToggleAttendance}
+            className="transition-transform hover:scale-105"
+          >
+            <StatusBadge status={attendanceState} />
+          </button>
+        )}
 
         <NotificationBell />
 

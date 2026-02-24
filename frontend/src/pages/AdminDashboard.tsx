@@ -22,7 +22,6 @@ const AdminDashboard: React.FC = () => {
 
   const isAdmin = user?.role === "ADMIN" || user?.role === "HR";
   const employeesPagePath = user?.role === "ADMIN" ? "/employees/admin" : "/employees";
-  const checkOutToday = (stats?.absent_today ?? 0) + (stats?.on_leave_today ?? 0);
 
   useEffect(() => {
     let mounted = true;
@@ -85,7 +84,7 @@ const AdminDashboard: React.FC = () => {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Check In Today</CardTitle>
+            <CardTitle>Present Today</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold text-foreground">
@@ -95,11 +94,21 @@ const AdminDashboard: React.FC = () => {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Check Out Today</CardTitle>
+            <CardTitle>Absent Today</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold text-foreground">
-              {loading ? "—" : checkOutToday}
+              {loading ? "—" : stats?.absent_today ?? 0}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>On Leave Today</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-foreground">
+              {loading ? "—" : stats?.on_leave_today ?? 0}
             </p>
           </CardContent>
         </Card>
