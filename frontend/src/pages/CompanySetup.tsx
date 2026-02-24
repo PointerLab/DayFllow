@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Header } from "@/components/layout/Header";
 import { fetchCompanyConfig, saveCompanyConfig } from "@/api/companyConfig";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -17,7 +16,7 @@ const splitValues = (raw: string) =>
 
 const CompanySetup: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const isAdmin = user?.role === "ADMIN";
 
@@ -28,8 +27,13 @@ const CompanySetup: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+
     if (!isAdmin) {
-      setIsLoading(false);
+      navigate("/dashboard/employee");
       return;
     }
 
@@ -58,7 +62,7 @@ const CompanySetup: React.FC = () => {
     return () => {
       mounted = false;
     };
-  }, [isAdmin, toast]);
+  }, [isAdmin, isAuthenticated, navigate, toast]);
 
   const canSave = useMemo(() => {
     const departments = splitValues(departmentsInput);
@@ -95,7 +99,7 @@ const CompanySetup: React.FC = () => {
         title: "Configuration saved",
         description: "Create Employee form now uses these dropdown options.",
       });
-      navigate("/employees/new");
+      navigate("/dashboard/admin");
     } catch (error) {
       toast({
         title: "Save failed",
@@ -107,25 +111,17 @@ const CompanySetup: React.FC = () => {
     }
   };
 
-  if (!isAdmin) {
+  if (!isAuthenticated || !isAdmin) {
     return (
-      <div className="p-6">
-        <Header breadcrumb="Company Setup" subtitle="Admin only" />
-        <div className="mt-6 rounded-xl border border-border bg-card p-6">
-          <h2 className="text-lg font-semibold text-foreground">Access restricted</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Only company admin can edit company setup values.
-          </p>
-        </div>
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <p className="text-sm text-muted-foreground">Redirecting...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header breadcrumb="Company Setup" subtitle="Configure dropdown values for employee creation" />
-      <div className="p-6">
-        <div className="max-w-3xl rounded-2xl border border-border bg-card p-6">
+    <div className="min-h-screen bg-background flex items-center justify-center p-6">
+      <div className="w-full max-w-3xl rounded-2xl border border-border bg-card p-6">
           <h2 className="text-2xl font-bold text-foreground">Company Input Form</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             Add one item per line (or comma separated). Roles must be EMP, INT, or HR.
@@ -180,16 +176,8 @@ const CompanySetup: React.FC = () => {
               >
                 {isSaving ? "Saving..." : "Save Setup"}
               </button>
-              <button
-                type="button"
-                onClick={() => navigate("/dashboard/admin")}
-                className="rounded-xl border border-border px-5 py-2.5 text-foreground hover:bg-accent"
-              >
-                Skip
-              </button>
             </div>
           </form>
-        </div>
       </div>
     </div>
   );

@@ -36,6 +36,7 @@ const App = () => (
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/company/setup" element={<CompanySetup />} />
             
             {/* Protected Routes */}
             <Route element={<DashboardLayout />}>
@@ -44,7 +45,6 @@ const App = () => (
               <Route path="/employees" element={<Employees />} />
               <Route path="/employees/admin" element={<EmployeesAdmin />} />
               <Route path="/employees/new" element={<CreateEmployee />} />
-              <Route path="/company/setup" element={<CompanySetup />} />
               <Route path="/profile/admin" element={<AdminProfile />} />
               <Route path="/profile/employee" element={<EmployeeProfile />} />
               <Route path="/attendance/admin" element={<AdminAttendance />} />
