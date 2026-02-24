@@ -7,6 +7,7 @@ from accounts.company_table_service import insert_company_user_row
 from django.contrib.auth.hashers import make_password
 from django.db import transaction
 from django.conf import settings
+from accounts.models import CompanyConfig
 
 class LoginSerializer(serializers.Serializer):
     login_id = serializers.CharField()
@@ -76,6 +77,13 @@ class CreateEmployeeSerializer(serializers.Serializer):
         creator_role = getattr(getattr(request, "user", None), "role", None)
         if creator_role == "HR" and value == "HR":
             raise serializers.ValidationError("HR users cannot create HR accounts.")
+
+        company_name = getattr(getattr(request, "user", None), "company_name", "")
+        if company_name:
+            config = CompanyConfig.objects.filter(company_name=company_name).first()
+            if config and config.roles:
+                if value not in config.roles:
+                    raise serializers.ValidationError("Role is not allowed by company configuration.")
         return value
 
     def create(self, validated_data):

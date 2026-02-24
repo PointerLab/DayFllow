@@ -71,3 +71,29 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.login_id
+
+
+class CompanyConfig(models.Model):
+    company_name = models.CharField(max_length=150, unique=True, db_index=True)
+    departments = models.JSONField(default=list, blank=True)
+    roles = models.JSONField(default=list, blank=True)
+    employment_types = models.JSONField(default=list, blank=True)
+    created_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="company_configs_created",
+    )
+    updated_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="company_configs_updated",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.company_name} configuration"

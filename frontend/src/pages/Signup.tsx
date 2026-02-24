@@ -17,7 +17,7 @@ const Signup: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { signup } = useAuth();
+  const { signup, login } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -52,11 +52,12 @@ const Signup: React.FC = () => {
         email,
         password,
       });
+      await login(email, password);
       toast({
         title: 'Account created!',
-        description: 'Your account has been created. Please login to continue.',
+        description: 'Complete your company setup to continue.',
       });
-      navigate('/login');
+      navigate('/company/setup');
     } catch (error: any) {
       const message = error?.message || 'An error occurred. Please try again.';
       toast({

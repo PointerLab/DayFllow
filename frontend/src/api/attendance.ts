@@ -1,4 +1,4 @@
-import { apiGet } from '@/api/client';
+import { apiGet, apiPost } from '@/api/client';
 
 export interface AttendanceRecord {
   id: number;
@@ -17,4 +17,12 @@ export const fetchAllAttendance = async () => {
 
 export const fetchMyAttendance = async () => {
   return apiGet('/attendance/my/') as Promise<AttendanceRecord[]>;
+};
+
+export const checkInAttendance = async () => {
+  return apiPost('/attendance/check-in/', {});
+};
+
+export const checkOutAttendance = async () => {
+  return apiPost('/attendance/check-out/', {});
 };

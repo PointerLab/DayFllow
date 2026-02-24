@@ -86,7 +86,9 @@ class AllAttendanceAPIView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        records = Attendance.objects.all()
+        records = Attendance.objects.filter(
+            user__company_name=request.user.company_name
+        ).select_related("user")
         serializer = AttendanceListSerializer(records, many=True)
         return Response(serializer.data)
 

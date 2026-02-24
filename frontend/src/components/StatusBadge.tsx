@@ -1,7 +1,15 @@
 import React from 'react';
 import { Check, X, Clock, Plane } from 'lucide-react';
 
-type StatusType = 'present' | 'absent' | 'on-leave' | 'pending' | 'approved' | 'rejected';
+type StatusType =
+  | 'check-in'
+  | 'check-out'
+  | 'present'
+  | 'absent'
+  | 'on-leave'
+  | 'pending'
+  | 'approved'
+  | 'rejected';
 
 interface StatusBadgeProps {
   status: StatusType;
@@ -10,6 +18,18 @@ interface StatusBadgeProps {
 }
 
 const statusConfig: Record<StatusType, { label: string; bgClass: string; textClass: string; icon?: React.ReactNode }> = {
+  'check-in': {
+    label: 'Check In',
+    bgClass: 'bg-success',
+    textClass: 'text-success-foreground',
+    icon: <Check size={12} strokeWidth={2.5} />,
+  },
+  'check-out': {
+    label: 'Check Out',
+    bgClass: 'bg-warning',
+    textClass: 'text-warning-foreground',
+    icon: <X size={12} strokeWidth={2.5} />,
+  },
   present: {
     label: 'Present',
     bgClass: 'bg-success',
