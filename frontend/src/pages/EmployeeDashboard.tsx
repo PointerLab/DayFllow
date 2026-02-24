@@ -12,9 +12,8 @@ interface EmployeeDashboardStats {
 
 const statusLabel = (status: string) => {
   const normalized = status?.toUpperCase();
-  if (normalized === "PRESENT") return "Present";
-  if (normalized === "LEAVE") return "On Leave";
-  if (normalized === "ABSENT") return "Absent";
+  if (normalized === "PRESENT") return "Check In";
+  if (normalized === "LEAVE" || normalized === "ABSENT" || normalized === "HALF_DAY") return "Check Out";
   return status || "Unknown";
 };
 

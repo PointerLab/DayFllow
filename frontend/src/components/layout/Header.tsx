@@ -10,12 +10,12 @@ interface HeaderProps {
   subtitle?: string;
 }
 
-type AttendanceState = 'present' | 'absent' | 'on-leave';
+type AttendanceState = 'check-in' | 'check-out';
 
 export const Header: React.FC<HeaderProps> = ({ breadcrumb, subtitle }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [attendanceState, setAttendanceState] = useState<AttendanceState>('present');
+  const [attendanceState, setAttendanceState] = useState<AttendanceState>('check-in');
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'HR';
   const displayName =
     [user?.first_name, user?.last_name].filter(Boolean).join(' ') ||
@@ -23,11 +23,7 @@ export const Header: React.FC<HeaderProps> = ({ breadcrumb, subtitle }) => {
     'User';
 
   const handleToggleAttendance = () => {
-    setAttendanceState((prev) => {
-      if (prev === 'present') return 'absent';
-      if (prev === 'absent') return 'on-leave';
-      return 'present';
-    });
+    setAttendanceState((prev) => (prev === 'check-in' ? 'check-out' : 'check-in'));
   };
 
   const getProfileLink = () => {
