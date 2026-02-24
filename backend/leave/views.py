@@ -59,7 +59,9 @@ class AllLeavesAPIView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        leaves = LeaveRequest.objects.all()
+        leaves = LeaveRequest.objects.filter(
+            user__company_name=request.user.company_name
+        ).select_related("user")
         serializer = LeaveRequestSerializer(leaves, many=True)
         return Response(serializer.data)
 
@@ -82,7 +84,15 @@ class ApproveRejectLeaveAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        leave = LeaveRequest.objects.get(id=leave_id)
+        leave = LeaveRequest.objects.filter(
+            id=leave_id,
+            user__company_name=request.user.company_name,
+        ).first()
+        if not leave:
+            return Response(
+                {"detail": "Leave request not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
         leave.status = "APPROVED" if action == "APPROVE" else "REJECTED"
         leave.save()

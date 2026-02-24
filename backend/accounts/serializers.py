@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CustomUser
+from .models import CustomUser, CompanyConfig
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -66,3 +66,69 @@ class EmployeeListSerializer(serializers.ModelSerializer):
             "is_active",
             "is_approved",
         )
+
+
+class CompanyConfigSerializer(serializers.ModelSerializer):
+    departments = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+    )
+    roles = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+    )
+    employment_types = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+    )
+
+    class Meta:
+        model = CompanyConfig
+        fields = (
+            "company_name",
+            "departments",
+            "roles",
+            "employment_types",
+            "updated_at",
+        )
+        read_only_fields = ("company_name", "updated_at")
+
+    def _normalize_list(self, values):
+        cleaned = []
+        seen = set()
+        for item in values or []:
+            value = (item or "").strip()
+            if not value:
+                continue
+            key = value.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            cleaned.append(value)
+        return cleaned
+
+    def validate_departments(self, value):
+        return self._normalize_list(value)
+
+    def validate_roles(self, value):
+        normalized = self._normalize_list(value)
+        allowed = {
+            "EMP": "EMP",
+            "EMPLOYEE": "EMP",
+            "INT": "INT",
+            "INTERN": "INT",
+            "HR": "HR",
+        }
+        role_codes = []
+        for role in normalized:
+            mapped = allowed.get(role.upper())
+            if not mapped:
+                raise serializers.ValidationError(
+                    "Roles can only include EMP/Employee, INT/Intern, or HR."
+                )
+            if mapped not in role_codes:
+                role_codes.append(mapped)
+        return role_codes
+
+    def validate_employment_types(self, value):
+        return self._normalize_list(value)
