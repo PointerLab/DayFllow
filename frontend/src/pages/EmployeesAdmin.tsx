@@ -3,7 +3,7 @@ import { Header } from '@/components/layout/Header';
 import { AvatarWithBadge } from '@/components/Avatar';
 import { Search, Download, MoreVertical, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { fetchEmployees } from '@/api/employees';
+import { exportEmployees, fetchEmployees } from '@/api/employees';
 
 interface Employee {
   id: number;
@@ -25,6 +25,7 @@ const EmployeesAdmin: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRole, setSelectedRole] = useState('all');
   const [selectedEmployees, setSelectedEmployees] = useState<number[]>([]);
+  const [isExporting, setIsExporting] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -103,6 +104,27 @@ const EmployeesAdmin: React.FC = () => {
       ? 'bg-success text-success-foreground'
       : 'bg-muted text-muted-foreground';
 
+  const handleExport = async () => {
+    setIsExporting(true);
+    setError(null);
+    try {
+      const roleFilter = selectedRole === 'all' ? undefined : (selectedRole as 'HR' | 'EMP' | 'INT');
+      const { blob, filename } = await exportEmployees('non_admin', roleFilter);
+      const url = window.URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to export employees');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header breadcrumb="Employees Admin" subtitle="All company users except admin" />
@@ -121,9 +143,13 @@ const EmployeesAdmin: React.FC = () => {
               <Plus size={18} />
               Add Employee
             </button>
-            <button className="inline-flex items-center gap-2 px-4 py-2.5 bg-card border border-border rounded-lg text-foreground hover:bg-accent transition-colors">
+            <button
+              onClick={handleExport}
+              disabled={isExporting}
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-card border border-border rounded-lg text-foreground hover:bg-accent transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            >
               <Download size={18} />
-              Export
+              {isExporting ? 'Exporting...' : 'Export'}
             </button>
           </div>
         </div>

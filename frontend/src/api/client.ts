@@ -79,3 +79,21 @@ export const apiPut = async (path: string, body: unknown) => {
 
   return response.json();
 };
+
+export const apiDownload = async (path: string) => {
+  const response = await fetch(`${BASE_URL}${path}`, {
+    headers: {
+      ...getAuthHeaders(),
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseError(response));
+  }
+
+  const blob = await response.blob();
+  const disposition = response.headers.get("Content-Disposition") || "";
+  const match = disposition.match(/filename="([^"]+)"/i);
+  const filename = match?.[1] || "download";
+  return { blob, filename };
+};
