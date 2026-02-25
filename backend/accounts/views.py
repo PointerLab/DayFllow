@@ -2,7 +2,11 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.views import APIView
 from django.db import transaction
+from django.http import HttpResponse
+from openpyxl import Workbook
+from datetime import datetime
 from .serializers import (
     UserRegistrationSerializer,
     EmployeeListSerializer,
@@ -11,6 +15,28 @@ from .serializers import (
 from .models import CustomUser, CompanyConfig
 from .company_table_service import ensure_company_table, insert_company_user_row
 import traceback
+
+
+def get_employee_queryset_for_request(request):
+    user = request.user
+    if user.role not in ["ADMIN", "HR"]:
+        raise PermissionDenied("Permission denied")
+
+    queryset = CustomUser.objects.filter(company_name=user.company_name)
+    scope = request.query_params.get("scope")
+
+    if scope == "non_admin":
+        if user.role != "ADMIN":
+            raise PermissionDenied("Permission denied")
+        queryset = queryset.exclude(role="ADMIN")
+    elif scope == "employees_only":
+        queryset = queryset.filter(role="EMP")
+
+    role = request.query_params.get("role")
+    if role:
+        queryset = queryset.filter(role=role)
+
+    return queryset.order_by("date_of_joining", "id")
 
 class UserRegistrationView(generics.CreateAPIView):
     serializer_class = UserRegistrationSerializer
@@ -59,20 +85,58 @@ class EmployeeListAPIView(generics.ListAPIView):
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
-        user = self.request.user
-        if user.role not in ["ADMIN", "HR"]:
-            raise PermissionDenied("Permission denied")
-        queryset = CustomUser.objects.filter(company_name=user.company_name)
-        scope = self.request.query_params.get("scope")
+        return get_employee_queryset_for_request(self.request)
 
-        if scope == "non_admin":
-            if user.role != "ADMIN":
-                raise PermissionDenied("Permission denied")
-            queryset = queryset.exclude(role="ADMIN")
-        elif scope == "employees_only":
-            queryset = queryset.filter(role="EMP")
 
-        return queryset.order_by("date_of_joining", "id")
+class EmployeeExportAPIView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request):
+        queryset = get_employee_queryset_for_request(request)
+
+        workbook = Workbook()
+        worksheet = workbook.active
+        worksheet.title = "Employees"
+
+        headers = [
+            "Employee ID",
+            "First Name",
+            "Last Name",
+            "Email",
+            "Role",
+            "Department",
+            "Employment Type",
+            "Status",
+            "Date Of Joining",
+        ]
+        worksheet.append(headers)
+
+        for user in queryset:
+            worksheet.append(
+                [
+                    user.login_id or "",
+                    user.first_name or "",
+                    user.last_name or "",
+                    user.email or "",
+                    user.role or "",
+                    user.department or "",
+                    user.employment_type or "",
+                    "Active" if user.is_active else "Inactive",
+                    user.date_of_joining.isoformat() if user.date_of_joining else "",
+                ]
+            )
+
+        response = HttpResponse(
+            content_type=(
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+        )
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        response["Content-Disposition"] = (
+            f'attachment; filename="employees_{timestamp}.xlsx"'
+        )
+        workbook.save(response)
+        return response
 
 
 class CompanyConfigAPIView(generics.GenericAPIView):
