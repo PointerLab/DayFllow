@@ -59,6 +59,15 @@ const Login: React.FC = () => {
         }
         navigate('/dashboard/admin');
       } else {
+        if (isAdmin) {
+          toast({
+            title: 'Access denied',
+            description: 'Admin/HR accounts must login through Admin.',
+            variant: 'destructive',
+          });
+          logout();
+          return;
+        }
         navigate('/dashboard/employee');
       }
     } catch (error: any) {

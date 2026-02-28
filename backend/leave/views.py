@@ -61,6 +61,8 @@ class AllLeavesAPIView(APIView):
 
         leaves = LeaveRequest.objects.filter(
             user__company_name=request.user.company_name
+        ).exclude(
+            user__role="ADMIN"
         ).select_related("user")
         serializer = LeaveRequestSerializer(leaves, many=True)
         return Response(serializer.data)

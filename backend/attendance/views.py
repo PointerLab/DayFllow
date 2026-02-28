@@ -62,6 +62,8 @@ class AllAttendanceAPIView(APIView):
 
         records = Attendance.objects.filter(
             user__company_name=request.user.company_name
+        ).exclude(
+            user__role="ADMIN"
         ).select_related("user")
         serializer = AttendanceListSerializer(records, many=True)
         return Response(serializer.data)
