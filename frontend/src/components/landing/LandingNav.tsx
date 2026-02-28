@@ -38,7 +38,7 @@ export const LandingNav: React.FC = () => {
           <img 
             src={dayflowLogo} 
             alt="Dayflow" 
-            className="h-10 w-auto object-contain"
+            className="h-10 w-auto rounded-2xl object-contain"
           />
         </Link>
 
@@ -68,7 +68,7 @@ export const LandingNav: React.FC = () => {
         <div className="hidden md:block">
           <button
             onClick={() => navigate('/login')}
-            className="px-6 py-2.5 text-foreground font-semibold hover:text-primary transition-colors"
+            className="group inline-flex items-center gap-3 px-5 py-1 bg-primary text-primary-foreground rounded-2xl font-semibold text-lg shadow-glow hover:shadow-glow-lg transition-all duration-300 hover:scale-105"
           >
             Login
           </button>
