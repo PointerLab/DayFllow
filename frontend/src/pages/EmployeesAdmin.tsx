@@ -15,6 +15,7 @@ interface Employee {
   date_of_joining: string;
   department: string;
   employment_type: string;
+  salary?: number | string | null;
   is_active: boolean;
 }
 
@@ -103,6 +104,12 @@ const EmployeesAdmin: React.FC = () => {
     active
       ? 'bg-success text-success-foreground'
       : 'bg-muted text-muted-foreground';
+  const formatSalary = (salary?: number | string | null) => {
+    if (salary === null || salary === undefined || salary === '') return '--';
+    const numeric = typeof salary === 'number' ? salary : Number(salary);
+    if (Number.isNaN(numeric)) return '--';
+    return numeric.toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
+  };
 
   const handleExport = async () => {
     setIsExporting(true);
@@ -207,6 +214,7 @@ const EmployeesAdmin: React.FC = () => {
                   <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Department</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Role</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Type</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Salary</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Status</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Joining Date</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">Actions</th>
@@ -215,19 +223,19 @@ const EmployeesAdmin: React.FC = () => {
               <tbody className="divide-y divide-border">
                 {isLoading ? (
                   <tr>
-                    <td className="px-4 py-10 text-center text-sm text-muted-foreground" colSpan={9}>
+                    <td className="px-4 py-10 text-center text-sm text-muted-foreground" colSpan={10}>
                       Loading employees...
                     </td>
                   </tr>
                 ) : error ? (
                   <tr>
-                    <td className="px-4 py-10 text-center text-sm text-error" colSpan={9}>
+                    <td className="px-4 py-10 text-center text-sm text-error" colSpan={10}>
                       {error}
                     </td>
                   </tr>
                 ) : filteredEmployees.length === 0 ? (
                   <tr>
-                    <td className="px-4 py-10 text-center text-sm text-muted-foreground" colSpan={9}>
+                    <td className="px-4 py-10 text-center text-sm text-muted-foreground" colSpan={10}>
                       No employees yet. Add employees to see them here.
                     </td>
                   </tr>
@@ -265,6 +273,7 @@ const EmployeesAdmin: React.FC = () => {
                         <td className="px-4 py-4 text-sm text-foreground">{employee.department || '--'}</td>
                         <td className="px-4 py-4 text-sm text-foreground">{getRoleLabel(employee.role)}</td>
                         <td className="px-4 py-4 text-sm text-foreground">{employee.employment_type || '--'}</td>
+                        <td className="px-4 py-4 text-sm text-foreground">{formatSalary(employee.salary)}</td>
                         <td className="px-4 py-4">
                           <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getStatusClass(employee.is_active)}`}>
                             {getStatusLabel(employee.is_active)}

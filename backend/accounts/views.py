@@ -106,6 +106,7 @@ class EmployeeExportAPIView(APIView):
             "Role",
             "Department",
             "Employment Type",
+            "Salary",
             "Status",
             "Date Of Joining",
         ]
@@ -121,6 +122,7 @@ class EmployeeExportAPIView(APIView):
                     user.role or "",
                     user.department or "",
                     user.employment_type or "",
+                    float(user.salary) if user.salary is not None else "",
                     "Active" if user.is_active else "Inactive",
                     user.date_of_joining.isoformat() if user.date_of_joining else "",
                 ]
