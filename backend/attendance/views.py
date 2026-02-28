@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -10,31 +9,6 @@ from .models import Attendance
 from .utils import calculate_status
 from .serializers import AttendanceSerializer, AttendanceListSerializer
 from leave.models import LeaveRequest
-from datetime import date
-
-
-class CheckInAPIView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request):
-        today = date.today()
-
-        attendance, created = Attendance.objects.get_or_create(
-            user=request.user,
-            date=today,
-            defaults={"status": "ABSENT"},
-        )
-
-        if attendance.check_in:
-            return Response(
-                {"detail": "Already checked in"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        attendance.check_in = timezone.now()
-        attendance.save()
-
-        return Response({"detail": "Check-in successful"})
 
 class CheckOutAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -115,7 +89,7 @@ class CheckInAPIView(APIView):
         attendance, created = Attendance.objects.get_or_create(
             user=request.user,
             date=today,
-            defaults={"status": "ABSENT"},
+            defaults={"status": "PRESENT"},
         )
 
         if attendance.check_in:
@@ -125,6 +99,7 @@ class CheckInAPIView(APIView):
             )
 
         attendance.check_in = timezone.now()
+        attendance.status = "PRESENT"
         attendance.save()
 
         return Response({"detail": "Check-in successful"})
