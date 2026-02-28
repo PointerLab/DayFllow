@@ -63,6 +63,7 @@ class EmployeeListSerializer(serializers.ModelSerializer):
             "date_of_joining",
             "department",
             "employment_type",
+            "salary",
             "is_active",
             "is_approved",
         )

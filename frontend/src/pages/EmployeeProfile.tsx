@@ -1,7 +1,7 @@
 import React from 'react';
 import { Header } from '@/components/layout/Header';
 import { AvatarWithBadge } from '@/components/Avatar';
-import { Mail, User, Briefcase, Building2, Calendar, Clock } from 'lucide-react';
+import { Mail, User, Briefcase, Building2, Calendar, Clock, Wallet } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 const roleLabel = (role?: 'ADMIN' | 'HR' | 'EMP' | 'INT') => {
@@ -25,6 +25,12 @@ const EmployeeProfile: React.FC = () => {
       year: 'numeric',
     })
     : '--';
+  const formattedSalary = (() => {
+    if (user?.salary === null || user?.salary === undefined || user?.salary === '') return '--';
+    const numeric = typeof user.salary === 'number' ? user.salary : Number(user.salary);
+    if (Number.isNaN(numeric)) return '--';
+    return numeric.toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
+  })();
 
   return (
     <div className="min-h-screen bg-background">
@@ -114,6 +120,15 @@ const EmployeeProfile: React.FC = () => {
                   <div>
                     <p className="text-xs text-muted-foreground">Date of Joining</p>
                     <p className="text-sm font-medium text-foreground">{joiningDate}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-lavender rounded-lg">
+                    <Wallet size={18} className="text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Salary</p>
+                    <p className="text-sm font-medium text-foreground">{formattedSalary}</p>
                   </div>
                 </div>
               </div>

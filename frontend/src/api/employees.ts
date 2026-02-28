@@ -13,6 +13,7 @@ export const createEmployee = async (payload: {
   date_of_joining: string;
   department?: string;
   employment_type?: string;
+  salary?: number;
 }) => {
   return apiPost("/auth/create-employee/", payload);
 };

@@ -63,26 +63,50 @@ const AdminAttendance: React.FC = () => {
   useEffect(() => {
     let isMounted = true;
 
-    const loadAttendance = async () => {
+    const loadAttendance = async (showLoader = false) => {
+      if (showLoader && isMounted) {
+        setIsLoading(true);
+      }
       try {
         const data = await fetchAllAttendance();
         if (isMounted) {
           setAttendance(data);
+          setError(null);
         }
       } catch (err) {
         if (isMounted) {
           setError(err instanceof Error ? err.message : 'Failed to load attendance');
         }
       } finally {
-        if (isMounted) {
+        if (isMounted && showLoader) {
           setIsLoading(false);
         }
       }
     };
 
-    loadAttendance();
+    loadAttendance(true);
+
+    const intervalId = window.setInterval(() => {
+      loadAttendance(false);
+    }, 15000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        loadAttendance(false);
+      }
+    };
+    const handleWindowFocus = () => {
+      loadAttendance(false);
+    };
+
+    window.addEventListener('focus', handleWindowFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
       isMounted = false;
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', handleWindowFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
 

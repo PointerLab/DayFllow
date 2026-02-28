@@ -11,6 +11,7 @@ interface User {
   date_of_joining?: string;
   department?: string;
   employment_type?: string;
+  salary?: number | string | null;
 }
 
 interface AuthContextType {
@@ -45,6 +46,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       date_of_joining: data.date_of_joining ?? userDetails?.date_of_joining,
       department: data.department ?? userDetails?.department ?? '',
       employment_type: data.employment_type ?? userDetails?.employment_type ?? '',
+      salary: data.salary ?? userDetails?.salary ?? null,
     };
     setUser(userData);
     localStorage.setItem('dayflow_user', JSON.stringify(userData));
