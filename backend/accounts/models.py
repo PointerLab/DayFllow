@@ -54,6 +54,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     date_of_joining = models.DateField(default=date.today)
     department = models.CharField(max_length=100, blank=True, default="")
     employment_type = models.CharField(max_length=50, blank=True, default="")
+    salary = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
 
     must_change_password = models.BooleanField(default=False)
     is_approved = models.BooleanField(default=True)

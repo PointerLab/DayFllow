@@ -30,6 +30,7 @@ class LoginAPIView(APIView):
             "date_of_joining": user.date_of_joining,
             "department": user.department,
             "employment_type": user.employment_type,
+            "salary": user.salary,
         }, status=status.HTTP_200_OK)
     
 class ChangePasswordAPIView(APIView):

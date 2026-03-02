@@ -66,6 +66,7 @@ class CreateEmployeeSerializer(serializers.Serializer):
     date_of_joining = serializers.DateField()
     department = serializers.CharField(required=False, allow_blank=True)
     employment_type = serializers.CharField(required=False, allow_blank=True)
+    salary = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, allow_null=True)
 
     def validate_email(self, value):
         if CustomUser.objects.filter(email=value).exists():
@@ -113,6 +114,7 @@ class CreateEmployeeSerializer(serializers.Serializer):
                 date_of_joining=validated_data["date_of_joining"],
                 department=validated_data.get("department", ""),
                 employment_type=employment_type,
+                salary=validated_data.get("salary"),
                 password=make_password(temp_password),
                 must_change_password=True,
             )

@@ -14,6 +14,7 @@ const CreateEmployee: React.FC = () => {
   const [dateOfJoining, setDateOfJoining] = useState('');
   const [department, setDepartment] = useState('');
   const [employmentType, setEmploymentType] = useState('');
+  const [salary, setSalary] = useState('');
   const [departmentOptions, setDepartmentOptions] = useState<string[]>([]);
   const [roleOptions, setRoleOptions] = useState<Array<'EMP' | 'INT' | 'HR'>>(['EMP', 'INT', 'HR']);
   const [employmentTypeOptions, setEmploymentTypeOptions] = useState<string[]>([]);
@@ -95,6 +96,7 @@ const CreateEmployee: React.FC = () => {
         date_of_joining: dateOfJoining,
         department: department || undefined,
         employment_type: role === 'HR' ? undefined : (employmentType || undefined),
+        salary: salary ? Number(salary) : undefined,
       });
 
       setCreated({
@@ -161,6 +163,19 @@ const CreateEmployee: React.FC = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">Salary</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={salary}
+                onChange={(e) => setSalary(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                 required
               />

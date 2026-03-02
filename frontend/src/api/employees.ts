@@ -1,4 +1,4 @@
-import { apiGet, apiPost } from "@/api/client";
+import { apiDownload, apiGet, apiPost } from "@/api/client";
 
 export const fetchEmployees = async (scope?: "non_admin" | "employees_only") => {
   const query = scope ? `?scope=${scope}` : "";
@@ -13,6 +13,21 @@ export const createEmployee = async (payload: {
   date_of_joining: string;
   department?: string;
   employment_type?: string;
+  salary?: number;
 }) => {
   return apiPost("/auth/create-employee/", payload);
+};
+
+export const exportEmployees = async (scope?: "non_admin" | "employees_only", role?: "HR" | "EMP" | "INT") => {
+  const params = new URLSearchParams();
+  if (scope) {
+    params.set("scope", scope);
+  }
+  if (role) {
+    params.set("role", role);
+  }
+
+  const query = params.toString();
+  const path = query ? `/accounts/employees/export/?${query}` : "/accounts/employees/export/";
+  return apiDownload(path);
 };

@@ -59,7 +59,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, quote, author 
             <img 
               src={dayflowLogo} 
               alt="Dayflow" 
-              className="h-16 w-auto mx-auto mb-8"
+              className="h-16 w-auto rounded-2xl mx-auto mb-8"
               
             />
           </motion.div>
