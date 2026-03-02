@@ -8,7 +8,7 @@ from .serializers import (
     EmployeeListSerializer,
     CompanyConfigSerializer,
 )
-from .models import CustomUser, CompanyConfig
+from .models import CustomUser, CompanyConfig, CompanyLogo
 from .company_table_service import ensure_company_table, insert_company_user_row
 import traceback
 
@@ -91,6 +91,8 @@ class CompanyConfigAPIView(generics.GenericAPIView):
             raise PermissionDenied("Permission denied")
 
         instance = self.get_object()
+        logo = CompanyLogo.objects.filter(company_name=request.user.company_name).first()
+        logo_url = logo.logo_url if logo else ""
         if not instance:
             return Response(
                 {
@@ -98,23 +100,37 @@ class CompanyConfigAPIView(generics.GenericAPIView):
                     "departments": [],
                     "roles": [],
                     "employment_types": [],
+                    "logo_url": logo_url,
                     "updated_at": None,
                 },
                 status=status.HTTP_200_OK,
             )
 
         serializer = self.get_serializer(instance)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        response_data = serializer.data
+        response_data["logo_url"] = logo_url
+        return Response(response_data, status=status.HTTP_200_OK)
 
     def put(self, request):
         if request.user.role != "ADMIN":
             raise PermissionDenied("Only admin can update company configuration.")
 
+        logo_url = (request.data.get("logo_url") or "").strip()
+        existing_logo = CompanyLogo.objects.filter(company_name=request.user.company_name).first()
+
         instance = self.get_object()
+        if not existing_logo and not logo_url:
+            return Response(
+                {"detail": "Company logo is required when saving company setup."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        payload = request.data.copy()
+        payload.pop("logo_url", None)
         if instance:
-            serializer = self.get_serializer(instance, data=request.data, partial=True)
+            serializer = self.get_serializer(instance, data=payload, partial=True)
         else:
-            serializer = self.get_serializer(data=request.data)
+            serializer = self.get_serializer(data=payload)
         serializer.is_valid(raise_exception=True)
 
         if instance:
@@ -126,4 +142,19 @@ class CompanyConfigAPIView(generics.GenericAPIView):
                 updated_by=request.user,
             )
 
-        return Response(self.get_serializer(config).data, status=status.HTTP_200_OK)
+        if logo_url:
+            defaults = {
+                "logo_url": logo_url,
+                "updated_by": request.user,
+            }
+            if not existing_logo:
+                defaults["created_by"] = request.user
+            CompanyLogo.objects.update_or_create(
+                company_name=request.user.company_name,
+                defaults=defaults,
+            )
+
+        refreshed_logo = CompanyLogo.objects.filter(company_name=request.user.company_name).first()
+        response_data = self.get_serializer(config).data
+        response_data["logo_url"] = refreshed_logo.logo_url if refreshed_logo else ""
+        return Response(response_data, status=status.HTTP_200_OK)

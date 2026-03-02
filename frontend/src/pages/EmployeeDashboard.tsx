@@ -10,6 +10,7 @@ interface EmployeeDashboardStats {
   present_days: number;
   leave_days: number;
   pending_leaves: number;
+  payroll_status: "PENDING" | "PAID";
 }
 
 const statusLabel = (status: string, checkIn: string | null, checkOut: string | null) => {
@@ -60,7 +61,7 @@ const EmployeeDashboard: React.FC = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Today</CardTitle>
@@ -105,6 +106,17 @@ const EmployeeDashboard: React.FC = () => {
             <p className="text-3xl font-bold text-foreground">
               {loading ? "—" : stats?.pending_leaves ?? 0}
             </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Payroll Status</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-semibold text-foreground">
+              {loading ? "—" : stats?.payroll_status ?? "PENDING"}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">Current month</p>
           </CardContent>
         </Card>
       </div>

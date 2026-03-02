@@ -7,12 +7,14 @@ from django.utils import timezone
 from attendance.models import Attendance
 from leave.models import LeaveRequest
 from accounts.models import CustomUser
+from payroll.models import PayrollRecord
 
 class EmployeeDashboardAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         today = date.today()
+        payroll_month = today.replace(day=1)
 
         today_attendance = Attendance.objects.filter(
             user=request.user,
@@ -24,6 +26,10 @@ class EmployeeDashboardAPIView(APIView):
             date__month=today.month,
             date__year=today.year
         )
+        payroll = PayrollRecord.objects.filter(
+            employee=request.user,
+            month=payroll_month,
+        ).first()
 
         data = {
             "today_status": today_attendance.status if today_attendance else "PENDING",
@@ -31,6 +37,7 @@ class EmployeeDashboardAPIView(APIView):
             "today_check_out": today_attendance.check_out if today_attendance else None,
             "present_days": month_attendance.filter(status="PRESENT").count(),
             "leave_days": month_attendance.filter(status="LEAVE").count(),
+            "payroll_status": payroll.status if payroll else "PENDING",
             "pending_leaves": LeaveRequest.objects.filter(
                 user=request.user,
                 status="PENDING"
@@ -74,6 +81,10 @@ class AdminDashboardAPIView(APIView):
                 status="PENDING",
                 user__company_name=request.user.company_name,
             ).count(),
+            "pending_payrolls": PayrollRecord.objects.filter(
+                employee__company_name=request.user.company_name,
+                status="PENDING",
+            ).count(),
         }
 
         return Response(data)
@@ -106,6 +117,22 @@ class DashboardNotificationsAPIView(APIView):
         items = []
 
         if user.role in ["ADMIN", "HR"]:
+            pending_payrolls = PayrollRecord.objects.filter(
+                employee__company_name=user.company_name,
+                status="PENDING",
+            ).count()
+            if pending_payrolls > 0:
+                items.append(
+                    {
+                        "id": "pending-payrolls",
+                        "title": "Pending payroll credits",
+                        "message": f"{pending_payrolls} payroll record(s) are pending salary credit.",
+                        "time": "Updated now",
+                        "tone": "warning",
+                        "read": False,
+                    }
+                )
+
             pending_leaves = LeaveRequest.objects.filter(
                 status="PENDING",
                 user__company_name=user.company_name,
@@ -162,6 +189,24 @@ class DashboardNotificationsAPIView(APIView):
                         "time": self._relative_time(leave.created_at),
                         "tone": tone,
                         "read": leave.status != "PENDING",
+                    }
+                )
+
+            latest_salary_credits = PayrollRecord.objects.filter(
+                employee=user,
+                status="PAID",
+            ).order_by("-credited_at", "-updated_at")[:5]
+            for payroll in latest_salary_credits:
+                credited_time = payroll.credited_at or payroll.updated_at
+                is_recent = bool(credited_time) and (timezone.now() - credited_time).days < 7
+                items.append(
+                    {
+                        "id": f"salary-{payroll.id}",
+                        "title": "Salary credited",
+                        "message": f"{payroll.month:%B %Y} salary of {payroll.net_salary} has been credited.",
+                        "time": self._relative_time(credited_time),
+                        "tone": "success",
+                        "read": not is_recent,
                     }
                 )
 

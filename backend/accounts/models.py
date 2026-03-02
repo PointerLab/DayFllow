@@ -97,3 +97,27 @@ class CompanyConfig(models.Model):
 
     def __str__(self):
         return f"{self.company_name} configuration"
+
+
+class CompanyLogo(models.Model):
+    company_name = models.CharField(max_length=150, unique=True, db_index=True)
+    logo_url = models.URLField(max_length=500)
+    created_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="company_logos_created",
+    )
+    updated_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="company_logos_updated",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.company_name} logo"
