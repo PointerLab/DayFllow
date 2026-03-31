@@ -3,10 +3,16 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.views import APIView
+from django.conf import settings
 from django.db import transaction
 from django.http import HttpResponse
 from openpyxl import Workbook
 from datetime import datetime
+import base64
+import hashlib
+import hmac
+import json
+from urllib import error, request as urllib_request
 from .serializers import (
     UserRegistrationSerializer,
     EmployeeListSerializer,

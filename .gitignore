@@ -5,6 +5,8 @@ venv/
 backend/venv/
 __pycache__/
 *.py[cod]
+
+backend/.env
 .env
 .env.local
 .env.development.local
