@@ -20,6 +20,7 @@ import EmployeeAttendance from "./pages/EmployeeAttendance";
 import AdminLeaves from "./pages/AdminLeaves";
 import EmployeeLeaves from "./pages/EmployeeLeaves";
 import CompanySetup from "./pages/CompanySetup";
+import PlanSelection from "./pages/PlanSelection";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ const App = () => (
             {/* Public Routes */}
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/plans" element={<PlanSelection />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/company/setup" element={<CompanySetup />} />
             

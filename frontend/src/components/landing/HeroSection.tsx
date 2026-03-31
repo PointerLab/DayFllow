@@ -51,7 +51,7 @@ export const HeroSection: React.FC = () => {
               Streamline your HR operations with intelligent automation.
             </p>
             <motion.button
-              onClick={() => navigate('/signup')}
+              onClick={() => navigate('/plans')}
               className="group inline-flex items-center gap-3 px-8 py-4 bg-primary text-primary-foreground rounded-xl font-semibold text-lg shadow-glow hover:shadow-glow-lg transition-all duration-300 hover:scale-105"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}

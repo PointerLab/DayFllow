@@ -12,7 +12,7 @@ export const Footer: React.FC = () => {
             <img 
               src={dayflowLogo} 
               alt="Dayflow" 
-              className="h-10 w-auto object-contain brightness-0 invert"
+              className="h-10 w-auto object-contain"
             />
           </div>
 
