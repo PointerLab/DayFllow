@@ -23,6 +23,7 @@ const CompanySetup: React.FC = () => {
   const [departmentsInput, setDepartmentsInput] = useState("");
   const [rolesInput, setRolesInput] = useState("EMP\nINT\nHR");
   const [employmentTypesInput, setEmploymentTypesInput] = useState("");
+  const [logoUrl, setLogoUrl] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -45,6 +46,7 @@ const CompanySetup: React.FC = () => {
         setDepartmentsInput((config.departments || []).join("\n"));
         setRolesInput((config.roles || []).join("\n") || "EMP\nINT\nHR");
         setEmploymentTypesInput((config.employment_types || []).join("\n"));
+        setLogoUrl(config.logo_url || "");
       } catch (error) {
         if (mounted) {
           toast({
@@ -68,8 +70,13 @@ const CompanySetup: React.FC = () => {
     const departments = splitValues(departmentsInput);
     const roles = splitValues(rolesInput);
     const employmentTypes = splitValues(employmentTypesInput);
-    return departments.length > 0 && roles.length > 0 && employmentTypes.length > 0;
-  }, [departmentsInput, rolesInput, employmentTypesInput]);
+    return (
+      departments.length > 0 &&
+      roles.length > 0 &&
+      employmentTypes.length > 0 &&
+      logoUrl.trim().length > 0
+    );
+  }, [departmentsInput, rolesInput, employmentTypesInput, logoUrl]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -78,11 +85,12 @@ const CompanySetup: React.FC = () => {
     const departments = splitValues(departmentsInput);
     const roles = splitValues(rolesInput);
     const employmentTypes = splitValues(employmentTypesInput);
+    const trimmedLogoUrl = logoUrl.trim();
 
-    if (!departments.length || !roles.length || !employmentTypes.length) {
+    if (!departments.length || !roles.length || !employmentTypes.length || !trimmedLogoUrl) {
       toast({
         title: "All fields are required",
-        description: "Enter at least one value in each list.",
+        description: "Enter all lists and add your company logo URL.",
         variant: "destructive",
       });
       return;
@@ -94,6 +102,7 @@ const CompanySetup: React.FC = () => {
         departments,
         roles,
         employment_types: employmentTypes,
+        logo_url: trimmedLogoUrl,
       });
       toast({
         title: "Configuration saved",
@@ -128,6 +137,23 @@ const CompanySetup: React.FC = () => {
           </p>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-5">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Company Logo URL
+              </label>
+              <input
+                type="url"
+                value={logoUrl}
+                onChange={(event) => setLogoUrl(event.target.value)}
+                className="w-full rounded-xl border border-input bg-background px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                placeholder="https://yourcompany.com/logo.png"
+                disabled={isLoading}
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Use a public image URL so salary slips can render the logo.
+              </p>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
                 Departments

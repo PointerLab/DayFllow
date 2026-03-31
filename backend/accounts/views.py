@@ -18,7 +18,7 @@ from .serializers import (
     EmployeeListSerializer,
     CompanyConfigSerializer,
 )
-from .models import CustomUser, CompanyConfig
+from .models import CustomUser, CompanyConfig, CompanyLogo
 from .company_table_service import ensure_company_table, insert_company_user_row
 import traceback
 
@@ -163,6 +163,8 @@ class CompanyConfigAPIView(generics.GenericAPIView):
             raise PermissionDenied("Permission denied")
 
         instance = self.get_object()
+        logo = CompanyLogo.objects.filter(company_name=request.user.company_name).first()
+        logo_url = logo.logo_url if logo else ""
         if not instance:
             return Response(
                 {
@@ -170,23 +172,37 @@ class CompanyConfigAPIView(generics.GenericAPIView):
                     "departments": [],
                     "roles": [],
                     "employment_types": [],
+                    "logo_url": logo_url,
                     "updated_at": None,
                 },
                 status=status.HTTP_200_OK,
             )
 
         serializer = self.get_serializer(instance)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        response_data = serializer.data
+        response_data["logo_url"] = logo_url
+        return Response(response_data, status=status.HTTP_200_OK)
 
     def put(self, request):
         if request.user.role != "ADMIN":
             raise PermissionDenied("Only admin can update company configuration.")
 
+        logo_url = (request.data.get("logo_url") or "").strip()
+        existing_logo = CompanyLogo.objects.filter(company_name=request.user.company_name).first()
+
         instance = self.get_object()
+        if not existing_logo and not logo_url:
+            return Response(
+                {"detail": "Company logo is required when saving company setup."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        payload = request.data.copy()
+        payload.pop("logo_url", None)
         if instance:
-            serializer = self.get_serializer(instance, data=request.data, partial=True)
+            serializer = self.get_serializer(instance, data=payload, partial=True)
         else:
-            serializer = self.get_serializer(data=request.data)
+            serializer = self.get_serializer(data=payload)
         serializer.is_valid(raise_exception=True)
 
         if instance:
@@ -198,112 +214,19 @@ class CompanyConfigAPIView(generics.GenericAPIView):
                 updated_by=request.user,
             )
 
-        return Response(self.get_serializer(config).data, status=status.HTTP_200_OK)
-
-
-PLAN_PRICING = {
-    "starter": 49900,  # paise
-    "enterprise": 149900,  # paise
-}
-
-
-class RazorpayCreateOrderAPIView(APIView):
-    permission_classes = (AllowAny,)
-
-    def post(self, request):
-        plan = str(request.data.get("plan", "")).strip().lower()
-        amount = PLAN_PRICING.get(plan)
-        if not amount:
-            return Response(
-                {"detail": "Invalid plan selected for payment."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        key_id = getattr(settings, "RAZORPAY_KEY_ID", "")
-        key_secret = getattr(settings, "RAZORPAY_KEY_SECRET", "")
-        if not key_id or not key_secret:
-            return Response(
-                {"detail": "Razorpay keys are not configured."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-
-        payload = json.dumps(
-            {
-                "amount": amount,
-                "currency": "INR",
-                "receipt": f"{plan}-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}",
-                "notes": {"plan": plan},
+        if logo_url:
+            defaults = {
+                "logo_url": logo_url,
+                "updated_by": request.user,
             }
-        ).encode("utf-8")
-        auth = base64.b64encode(f"{key_id}:{key_secret}".encode("utf-8")).decode("utf-8")
-        req = urllib_request.Request(
-            "https://api.razorpay.com/v1/orders",
-            data=payload,
-            headers={
-                "Content-Type": "application/json",
-                "Authorization": f"Basic {auth}",
-            },
-            method="POST",
-        )
-
-        try:
-            with urllib_request.urlopen(req, timeout=15) as response:
-                data = json.loads(response.read().decode("utf-8"))
-        except error.HTTPError as exc:
-            body = exc.read().decode("utf-8", errors="ignore")
-            return Response(
-                {"detail": "Failed to create Razorpay order.", "error": body or str(exc)},
-                status=status.HTTP_502_BAD_GATEWAY,
-            )
-        except Exception as exc:
-            return Response(
-                {"detail": f"Unable to create Razorpay order: {exc}"},
-                status=status.HTTP_502_BAD_GATEWAY,
+            if not existing_logo:
+                defaults["created_by"] = request.user
+            CompanyLogo.objects.update_or_create(
+                company_name=request.user.company_name,
+                defaults=defaults,
             )
 
-        return Response(
-            {
-                "key_id": key_id,
-                "plan": plan,
-                "amount": amount,
-                "currency": "INR",
-                "order_id": data.get("id"),
-            },
-            status=status.HTTP_200_OK,
-        )
-
-
-class RazorpayVerifyPaymentAPIView(APIView):
-    permission_classes = (AllowAny,)
-
-    def post(self, request):
-        order_id = str(request.data.get("razorpay_order_id", "")).strip()
-        payment_id = str(request.data.get("razorpay_payment_id", "")).strip()
-        signature = str(request.data.get("razorpay_signature", "")).strip()
-
-        if not order_id or not payment_id or not signature:
-            return Response(
-                {"detail": "Missing payment verification fields."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        key_secret = getattr(settings, "RAZORPAY_KEY_SECRET", "")
-        if not key_secret:
-            return Response(
-                {"detail": "Razorpay key secret is not configured."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-
-        expected_signature = hmac.new(
-            key_secret.encode("utf-8"),
-            f"{order_id}|{payment_id}".encode("utf-8"),
-            hashlib.sha256,
-        ).hexdigest()
-
-        if not hmac.compare_digest(expected_signature, signature):
-            return Response(
-                {"detail": "Payment signature verification failed."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        return Response({"verified": True}, status=status.HTTP_200_OK)
+        refreshed_logo = CompanyLogo.objects.filter(company_name=request.user.company_name).first()
+        response_data = self.get_serializer(config).data
+        response_data["logo_url"] = refreshed_logo.logo_url if refreshed_logo else ""
+        return Response(response_data, status=status.HTTP_200_OK)

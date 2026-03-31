@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import CustomUser
+from .models import CompanyConfig, CompanyLogo, CustomUser
 
 @admin.register(CustomUser)
 class UserAdmin(admin.ModelAdmin):
@@ -13,3 +13,15 @@ class UserAdmin(admin.ModelAdmin):
     )
     search_fields = ("login_id", "email")
     list_filter = ("role", "is_active")
+
+
+@admin.register(CompanyConfig)
+class CompanyConfigAdmin(admin.ModelAdmin):
+    list_display = ("company_name", "updated_at")
+    search_fields = ("company_name",)
+
+
+@admin.register(CompanyLogo)
+class CompanyLogoAdmin(admin.ModelAdmin):
+    list_display = ("company_name", "logo_url", "updated_at")
+    search_fields = ("company_name",)

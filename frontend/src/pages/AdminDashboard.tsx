@@ -11,6 +11,7 @@ interface AdminDashboardStats {
   absent_today: number;
   on_leave_today: number;
   pending_leaves: number;
+  pending_payrolls: number;
 }
 
 const AdminDashboard: React.FC = () => {
@@ -130,6 +131,12 @@ const AdminDashboard: React.FC = () => {
             <p className="text-sm text-muted-foreground mt-2">
               Review and act on leave requests from employees.
             </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Pending payroll credits:{" "}
+              <span className="font-semibold text-foreground">
+                {loading ? "—" : stats?.pending_payrolls ?? 0}
+              </span>
+            </p>
             <button
               className="mt-4 px-4 py-2 rounded-lg bg-secondary text-secondary-foreground font-medium"
               onClick={() => navigate("/leaves/admin")}
@@ -160,6 +167,12 @@ const AdminDashboard: React.FC = () => {
               onClick={() => navigate("/attendance/admin")}
             >
               Attendance Summary
+            </button>
+            <button
+              className="w-full px-4 py-2 rounded-lg bg-card border border-border text-foreground font-medium"
+              onClick={() => navigate("/payroll")}
+            >
+              Open Payroll
             </button>
           </CardContent>
         </Card>
