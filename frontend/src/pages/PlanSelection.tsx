@@ -1,6 +1,8 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { createRazorpayOrder, verifyRazorpayPayment } from "@/api/payment";
 
 type Plan = {
   id: "starter" | "enterprise" | "custom";
@@ -11,6 +13,53 @@ type Plan = {
   cta: string;
   highlight?: boolean;
 };
+
+type RazorpayOrderResponse = {
+  key_id: string;
+  plan: "starter" | "enterprise";
+  amount: number;
+  currency: string;
+  order_id: string;
+};
+
+type RazorpayHandlerResponse = {
+  razorpay_payment_id: string;
+  razorpay_order_id: string;
+  razorpay_signature: string;
+};
+
+type RazorpayOptions = {
+  key: string;
+  amount: number;
+  currency: string;
+  name: string;
+  description: string;
+  order_id: string;
+  handler: (response: RazorpayHandlerResponse) => void | Promise<void>;
+  prefill?: {
+    name?: string;
+    email?: string;
+    contact?: string;
+  };
+  theme?: {
+    color?: string;
+  };
+  modal?: {
+    ondismiss?: () => void;
+  };
+};
+
+type RazorpayInstance = {
+  open: () => void;
+};
+
+type RazorpayConstructor = new (options: RazorpayOptions) => RazorpayInstance;
+
+declare global {
+  interface Window {
+    Razorpay?: RazorpayConstructor;
+  }
+}
 
 const coreFeatures = [
   "Attendance tracking and reports",
@@ -52,9 +101,121 @@ const plans: Plan[] = [
 
 const PlanSelection: React.FC = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [loadingPlanId, setLoadingPlanId] = React.useState<Plan["id"] | null>(null);
 
-  const handlePlanAction = (planId: Plan["id"]) => {
-    navigate("/signup", { state: { selectedPlan: planId } });
+  const loadRazorpayScript = () =>
+    new Promise<boolean>((resolve) => {
+      if (window.Razorpay) {
+        resolve(true);
+        return;
+      }
+
+      const existing = document.querySelector<HTMLScriptElement>('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+      if (existing) {
+        existing.addEventListener("load", () => resolve(true), { once: true });
+        existing.addEventListener("error", () => resolve(false), { once: true });
+        return;
+      }
+
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.async = true;
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+
+  const handlePaidPlan = async (planId: "starter" | "enterprise") => {
+    setLoadingPlanId(planId);
+
+    try {
+      const isScriptLoaded = await loadRazorpayScript();
+      if (!isScriptLoaded || !window.Razorpay) {
+        throw new Error("Unable to load Razorpay checkout.");
+      }
+
+      const order = (await createRazorpayOrder(planId)) as RazorpayOrderResponse;
+      if (!order?.order_id || !order?.key_id) {
+        throw new Error("Payment order could not be created.");
+      }
+
+      const razorpay = new window.Razorpay({
+        key: order.key_id,
+        amount: order.amount,
+        currency: order.currency,
+        name: "Dayflow",
+        description:
+          planId === "starter"
+            ? "Starter Subscription - Rs 499"
+            : "Enterprise Subscription - Rs 1499",
+        order_id: order.order_id,
+        theme: { color: "#DD88CF" },
+        modal: {
+          ondismiss: () => {
+            setLoadingPlanId(null);
+            toast({
+              title: "Payment canceled",
+              description: "You can choose a plan again anytime.",
+            });
+          },
+        },
+        handler: async (paymentResponse) => {
+          try {
+            await verifyRazorpayPayment(paymentResponse);
+            toast({
+              title: "Payment successful",
+              description: "Continue signup to finish onboarding.",
+            });
+            navigate("/signup", {
+              state: {
+                selectedPlan: planId,
+                paymentStatus: "paid",
+                paymentId: paymentResponse.razorpay_payment_id,
+                orderId: paymentResponse.razorpay_order_id,
+              },
+            });
+          } catch (error) {
+            toast({
+              title: "Verification failed",
+              description:
+                error instanceof Error
+                  ? error.message
+                  : "Unable to verify payment. Please try again.",
+              variant: "destructive",
+            });
+          } finally {
+            setLoadingPlanId(null);
+          }
+        },
+      });
+
+      razorpay.open();
+    } catch (error) {
+      setLoadingPlanId(null);
+      toast({
+        title: "Payment unavailable",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Something went wrong while starting payment.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handlePlanAction = async (planId: Plan["id"]) => {
+    if (planId === "custom") {
+      navigate("/signup", {
+        state: {
+          selectedPlan: planId,
+          paymentStatus: "contact-sales",
+        },
+      });
+      return;
+    }
+
+    await handlePaidPlan(planId);
   };
 
   return (
@@ -110,15 +271,16 @@ const PlanSelection: React.FC = () => {
 
               <button
                 type="button"
-                onClick={() => handlePlanAction(plan.id)}
+                onClick={() => void handlePlanAction(plan.id)}
+                disabled={loadingPlanId === plan.id}
                 className={`mt-8 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${
                   plan.highlight
                     ? "bg-primary text-primary-foreground hover:bg-orchid-dark"
                     : "bg-deep-purple text-white hover:bg-deep-purple/90"
-                }`}
+                } disabled:cursor-not-allowed disabled:opacity-70`}
               >
-                {plan.cta}
-                <ArrowRight size={16} />
+                {loadingPlanId === plan.id ? "Opening payment..." : plan.cta}
+                {loadingPlanId === plan.id ? null : <ArrowRight size={16} />}
               </button>
             </article>
           ))}

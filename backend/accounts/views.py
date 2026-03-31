@@ -3,10 +3,16 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.views import APIView
+from django.conf import settings
 from django.db import transaction
 from django.http import HttpResponse
 from openpyxl import Workbook
 from datetime import datetime
+import base64
+import hashlib
+import hmac
+import json
+from urllib import error, request as urllib_request
 from .serializers import (
     UserRegistrationSerializer,
     EmployeeListSerializer,
@@ -193,3 +199,111 @@ class CompanyConfigAPIView(generics.GenericAPIView):
             )
 
         return Response(self.get_serializer(config).data, status=status.HTTP_200_OK)
+
+
+PLAN_PRICING = {
+    "starter": 49900,  # paise
+    "enterprise": 149900,  # paise
+}
+
+
+class RazorpayCreateOrderAPIView(APIView):
+    permission_classes = (AllowAny,)
+
+    def post(self, request):
+        plan = str(request.data.get("plan", "")).strip().lower()
+        amount = PLAN_PRICING.get(plan)
+        if not amount:
+            return Response(
+                {"detail": "Invalid plan selected for payment."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        key_id = getattr(settings, "RAZORPAY_KEY_ID", "")
+        key_secret = getattr(settings, "RAZORPAY_KEY_SECRET", "")
+        if not key_id or not key_secret:
+            return Response(
+                {"detail": "Razorpay keys are not configured."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        payload = json.dumps(
+            {
+                "amount": amount,
+                "currency": "INR",
+                "receipt": f"{plan}-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}",
+                "notes": {"plan": plan},
+            }
+        ).encode("utf-8")
+        auth = base64.b64encode(f"{key_id}:{key_secret}".encode("utf-8")).decode("utf-8")
+        req = urllib_request.Request(
+            "https://api.razorpay.com/v1/orders",
+            data=payload,
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Basic {auth}",
+            },
+            method="POST",
+        )
+
+        try:
+            with urllib_request.urlopen(req, timeout=15) as response:
+                data = json.loads(response.read().decode("utf-8"))
+        except error.HTTPError as exc:
+            body = exc.read().decode("utf-8", errors="ignore")
+            return Response(
+                {"detail": "Failed to create Razorpay order.", "error": body or str(exc)},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+        except Exception as exc:
+            return Response(
+                {"detail": f"Unable to create Razorpay order: {exc}"},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        return Response(
+            {
+                "key_id": key_id,
+                "plan": plan,
+                "amount": amount,
+                "currency": "INR",
+                "order_id": data.get("id"),
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class RazorpayVerifyPaymentAPIView(APIView):
+    permission_classes = (AllowAny,)
+
+    def post(self, request):
+        order_id = str(request.data.get("razorpay_order_id", "")).strip()
+        payment_id = str(request.data.get("razorpay_payment_id", "")).strip()
+        signature = str(request.data.get("razorpay_signature", "")).strip()
+
+        if not order_id or not payment_id or not signature:
+            return Response(
+                {"detail": "Missing payment verification fields."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        key_secret = getattr(settings, "RAZORPAY_KEY_SECRET", "")
+        if not key_secret:
+            return Response(
+                {"detail": "Razorpay key secret is not configured."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        expected_signature = hmac.new(
+            key_secret.encode("utf-8"),
+            f"{order_id}|{payment_id}".encode("utf-8"),
+            hashlib.sha256,
+        ).hexdigest()
+
+        if not hmac.compare_digest(expected_signature, signature):
+            return Response(
+                {"detail": "Payment signature verification failed."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response({"verified": True}, status=status.HTTP_200_OK)
