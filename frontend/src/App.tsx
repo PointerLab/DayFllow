@@ -21,6 +21,7 @@ import AdminLeaves from "./pages/AdminLeaves";
 import EmployeeLeaves from "./pages/EmployeeLeaves";
 import CompanySetup from "./pages/CompanySetup";
 import Payroll from "./pages/Payroll";
+import PlanSelection from "./pages/PlanSelection";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();

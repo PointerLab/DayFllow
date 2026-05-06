@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 import os
+import socket
+import warnings
 from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv
@@ -95,40 +97,90 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-database_url = os.getenv("DATABASE_URL")
-if database_url:
-    DATABASES = {
-        "default": dj_database_url.parse(
-            database_url,
-            conn_max_age=600,
-            ssl_require=True,
-        )
-    }
-else:
-    db_name = os.getenv("DB_NAME")
-    db_user = os.getenv("DB_USER")
-    db_password = os.getenv("DB_PASSWORD")
-    db_host = os.getenv("DB_HOST")
-    db_port = os.getenv("DB_PORT", "5432")
 
-    if all([db_name, db_user, db_password, db_host]):
-        DATABASES = {
-            "default": {
-                "ENGINE": "django.db.backends.postgresql",
-                "NAME": db_name,
-                "USER": db_user,
-                "PASSWORD": db_password,
-                "HOST": db_host,
-                "PORT": db_port,
-            }
+def _sqlite_database():
+    return {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
         }
+    }
+
+
+def _is_truthy_env(value: str | None) -> bool:
+    return str(value).lower() in {"1", "true", "yes", "on"}
+
+
+def _can_reach_db_host(host: str | None, port: str | int | None) -> bool:
+    if not host:
+        return False
+    try:
+        with socket.create_connection((host, int(port or 5432)), timeout=2):
+            return True
+    except OSError:
+        return False
+
+
+def _use_local_db_fallback(reason: str):
+    warnings.warn(f"{reason} Falling back to local SQLite database.")
+    return _sqlite_database()
+
+
+force_local_db = _is_truthy_env(os.getenv("FORCE_LOCAL_DB"))
+enable_db_fallback = _is_truthy_env(os.getenv("ENABLE_LOCAL_DB_FALLBACK", "true"))
+ssl_require = _is_truthy_env(os.getenv("DB_SSL_REQUIRE", "true"))
+
+if force_local_db:
+    DATABASES = _sqlite_database()
+else:
+    database_url = os.getenv("DATABASE_URL")
+    if database_url:
+        try:
+            parsed_db = dj_database_url.parse(
+                database_url,
+                conn_max_age=600,
+                ssl_require=ssl_require,
+            )
+            db_host = parsed_db.get("HOST")
+            db_port = parsed_db.get("PORT", 5432)
+            if enable_db_fallback and not _can_reach_db_host(db_host, db_port):
+                DATABASES = _use_local_db_fallback(
+                    f"DATABASE_URL host '{db_host}:{db_port}' is unreachable."
+                )
+            else:
+                DATABASES = {"default": parsed_db}
+        except Exception as exc:
+            if enable_db_fallback:
+                DATABASES = _use_local_db_fallback(
+                    f"Failed to parse DATABASE_URL ({exc})."
+                )
+            else:
+                raise
     else:
-        DATABASES = {
-            "default": {
-                "ENGINE": "django.db.backends.sqlite3",
-                "NAME": BASE_DIR / "db.sqlite3",
-            }
-        }
+        db_name = os.getenv("DB_NAME")
+        db_user = os.getenv("DB_USER")
+        db_password = os.getenv("DB_PASSWORD")
+        db_host = os.getenv("DB_HOST")
+        db_port = os.getenv("DB_PORT", "5432")
+
+        if all([db_name, db_user, db_password, db_host]):
+            if enable_db_fallback and not _can_reach_db_host(db_host, db_port):
+                DATABASES = _use_local_db_fallback(
+                    f"Configured Postgres host '{db_host}:{db_port}' is unreachable."
+                )
+            else:
+                DATABASES = {
+                    "default": {
+                        "ENGINE": "django.db.backends.postgresql",
+                        "NAME": db_name,
+                        "USER": db_user,
+                        "PASSWORD": db_password,
+                        "HOST": db_host,
+                        "PORT": db_port,
+                    }
+                }
+        else:
+            DATABASES = _sqlite_database()
 
 
 

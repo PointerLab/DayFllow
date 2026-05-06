@@ -18,85 +18,106 @@ def build_company_table_name(company_name: str) -> str:
 def ensure_company_table(company_name: str) -> str:
     table_name = build_company_table_name(company_name)
     quoted_table_name = connection.ops.quote_name(table_name)
+    vendor = connection.vendor
 
     with connection.cursor() as cursor:
-        cursor.execute(
-            f"""
-            CREATE TABLE IF NOT EXISTS {quoted_table_name} (
-                id BIGSERIAL PRIMARY KEY,
-                user_id BIGINT UNIQUE NOT NULL,
-                email VARCHAR(255) NOT NULL,
-                first_name VARCHAR(50) NOT NULL DEFAULT '',
-                last_name VARCHAR(50) NOT NULL DEFAULT '',
-                role VARCHAR(10) NOT NULL,
-                department VARCHAR(100) NOT NULL DEFAULT '',
-                employment_type VARCHAR(50) NOT NULL DEFAULT '',
-                date_of_joining DATE NOT NULL,
-                created_by_user_id BIGINT NULL,
-                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        if vendor == "sqlite":
+            # SQLite-compatible schema for local fallback DB.
+            cursor.execute(
+                f"""
+                CREATE TABLE IF NOT EXISTS {quoted_table_name} (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER UNIQUE NOT NULL,
+                    email TEXT NOT NULL,
+                    first_name TEXT NOT NULL DEFAULT '',
+                    last_name TEXT NOT NULL DEFAULT '',
+                    role TEXT NOT NULL,
+                    department TEXT NOT NULL DEFAULT '',
+                    employment_type TEXT NOT NULL DEFAULT '',
+                    date_of_joining DATE NOT NULL,
+                    created_by_user_id INTEGER NULL,
+                    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+                )
+                """
             )
-            """
-        )
-        cursor.execute(
-            f"""
-            ALTER TABLE {quoted_table_name}
-            ADD COLUMN IF NOT EXISTS user_id BIGINT
-            """
-        )
-        cursor.execute(
-            f"""
-            ALTER TABLE {quoted_table_name}
-            ADD COLUMN IF NOT EXISTS email VARCHAR(255)
-            """
-        )
-        cursor.execute(
-            f"""
-            ALTER TABLE {quoted_table_name}
-            ADD COLUMN IF NOT EXISTS first_name VARCHAR(50) NOT NULL DEFAULT ''
-            """
-        )
-        cursor.execute(
-            f"""
-            ALTER TABLE {quoted_table_name}
-            ADD COLUMN IF NOT EXISTS last_name VARCHAR(50) NOT NULL DEFAULT ''
-            """
-        )
-        cursor.execute(
-            f"""
-            ALTER TABLE {quoted_table_name}
-            ADD COLUMN IF NOT EXISTS role VARCHAR(10)
-            """
-        )
-        cursor.execute(
-            f"""
-            ALTER TABLE {quoted_table_name}
-            ADD COLUMN IF NOT EXISTS department VARCHAR(100) NOT NULL DEFAULT ''
-            """
-        )
-        cursor.execute(
-            f"""
-            ALTER TABLE {quoted_table_name}
-            ADD COLUMN IF NOT EXISTS employment_type VARCHAR(50) NOT NULL DEFAULT ''
-            """
-        )
-        cursor.execute(
-            f"""
-            ALTER TABLE {quoted_table_name}
-            ADD COLUMN IF NOT EXISTS date_of_joining DATE
-            """
-        )
-        cursor.execute(
-            f"""
-            ALTER TABLE {quoted_table_name}
-            ADD COLUMN IF NOT EXISTS created_by_user_id BIGINT NULL
-            """
-        )
-        cursor.execute(
-            f"""
-            ALTER TABLE {quoted_table_name}
-            ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-            """
-        )
+        else:
+            cursor.execute(
+                f"""
+                CREATE TABLE IF NOT EXISTS {quoted_table_name} (
+                    id BIGSERIAL PRIMARY KEY,
+                    user_id BIGINT UNIQUE NOT NULL,
+                    email VARCHAR(255) NOT NULL,
+                    first_name VARCHAR(50) NOT NULL DEFAULT '',
+                    last_name VARCHAR(50) NOT NULL DEFAULT '',
+                    role VARCHAR(10) NOT NULL,
+                    department VARCHAR(100) NOT NULL DEFAULT '',
+                    employment_type VARCHAR(50) NOT NULL DEFAULT '',
+                    date_of_joining DATE NOT NULL,
+                    created_by_user_id BIGINT NULL,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                )
+                """
+            )
+            cursor.execute(
+                f"""
+                ALTER TABLE {quoted_table_name}
+                ADD COLUMN IF NOT EXISTS user_id BIGINT
+                """
+            )
+            cursor.execute(
+                f"""
+                ALTER TABLE {quoted_table_name}
+                ADD COLUMN IF NOT EXISTS email VARCHAR(255)
+                """
+            )
+            cursor.execute(
+                f"""
+                ALTER TABLE {quoted_table_name}
+                ADD COLUMN IF NOT EXISTS first_name VARCHAR(50) NOT NULL DEFAULT ''
+                """
+            )
+            cursor.execute(
+                f"""
+                ALTER TABLE {quoted_table_name}
+                ADD COLUMN IF NOT EXISTS last_name VARCHAR(50) NOT NULL DEFAULT ''
+                """
+            )
+            cursor.execute(
+                f"""
+                ALTER TABLE {quoted_table_name}
+                ADD COLUMN IF NOT EXISTS role VARCHAR(10)
+                """
+            )
+            cursor.execute(
+                f"""
+                ALTER TABLE {quoted_table_name}
+                ADD COLUMN IF NOT EXISTS department VARCHAR(100) NOT NULL DEFAULT ''
+                """
+            )
+            cursor.execute(
+                f"""
+                ALTER TABLE {quoted_table_name}
+                ADD COLUMN IF NOT EXISTS employment_type VARCHAR(50) NOT NULL DEFAULT ''
+                """
+            )
+            cursor.execute(
+                f"""
+                ALTER TABLE {quoted_table_name}
+                ADD COLUMN IF NOT EXISTS date_of_joining DATE
+                """
+            )
+            cursor.execute(
+                f"""
+                ALTER TABLE {quoted_table_name}
+                ADD COLUMN IF NOT EXISTS created_by_user_id BIGINT NULL
+                """
+            )
+            cursor.execute(
+                f"""
+                ALTER TABLE {quoted_table_name}
+                ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                """
+            )
         cursor.execute(
             f"""
             CREATE UNIQUE INDEX IF NOT EXISTS {table_name}_user_id_uq
@@ -141,8 +162,7 @@ def insert_company_user_row(
                 employment_type = EXCLUDED.employment_type,
                 date_of_joining = EXCLUDED.date_of_joining,
                 created_by_user_id = EXCLUDED.created_by_user_id
-            """
-            ,
+            """,
             [
                 user.id,
                 user.email,

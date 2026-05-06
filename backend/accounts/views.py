@@ -230,3 +230,125 @@ class CompanyConfigAPIView(generics.GenericAPIView):
         response_data = self.get_serializer(config).data
         response_data["logo_url"] = refreshed_logo.logo_url if refreshed_logo else ""
         return Response(response_data, status=status.HTTP_200_OK)
+
+
+class RazorpayCreateOrderAPIView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        amount = request.data.get("amount")
+        currency = (request.data.get("currency") or "INR").strip().upper()
+        notes = request.data.get("notes") or {}
+
+        if amount in [None, ""]:
+            return Response(
+                {"detail": "Amount is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            amount = int(amount)
+            if amount <= 0:
+                raise ValueError
+        except (TypeError, ValueError):
+            return Response(
+                {"detail": "Amount must be a positive integer in paise."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        key_id = getattr(settings, "RAZORPAY_KEY_ID", "")
+        key_secret = getattr(settings, "RAZORPAY_KEY_SECRET", "")
+        if not key_id or not key_secret:
+            return Response(
+                {"detail": "Razorpay credentials are not configured."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        payload = {
+            "amount": amount,
+            "currency": currency,
+            "receipt": f"rcpt_{request.user.id}_{int(datetime.now().timestamp())}",
+            "notes": notes if isinstance(notes, dict) else {},
+        }
+
+        req = urllib_request.Request(
+            url="https://api.razorpay.com/v1/orders",
+            data=json.dumps(payload).encode("utf-8"),
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": "Basic "
+                + base64.b64encode(f"{key_id}:{key_secret}".encode("utf-8")).decode(
+                    "utf-8"
+                ),
+            },
+            method="POST",
+        )
+
+        try:
+            with urllib_request.urlopen(req, timeout=20) as response:
+                body = response.read().decode("utf-8")
+                order_data = json.loads(body)
+        except error.HTTPError as exc:
+            detail = exc.read().decode("utf-8", errors="ignore")
+            return Response(
+                {"detail": "Razorpay order creation failed.", "error": detail},
+                status=exc.code if 400 <= exc.code < 600 else status.HTTP_502_BAD_GATEWAY,
+            )
+        except error.URLError:
+            return Response(
+                {"detail": "Unable to reach Razorpay."},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        return Response(
+            {
+                "key": key_id,
+                "order": order_data,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class RazorpayVerifyPaymentAPIView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        order_id = (request.data.get("razorpay_order_id") or "").strip()
+        payment_id = (request.data.get("razorpay_payment_id") or "").strip()
+        signature = (request.data.get("razorpay_signature") or "").strip()
+
+        if not order_id or not payment_id or not signature:
+            return Response(
+                {
+                    "detail": (
+                        "razorpay_order_id, razorpay_payment_id and "
+                        "razorpay_signature are required."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        key_secret = getattr(settings, "RAZORPAY_KEY_SECRET", "")
+        if not key_secret:
+            return Response(
+                {"detail": "Razorpay credentials are not configured."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        expected_signature = hmac.new(
+            key_secret.encode("utf-8"),
+            f"{order_id}|{payment_id}".encode("utf-8"),
+            hashlib.sha256,
+        ).hexdigest()
+
+        is_valid = hmac.compare_digest(expected_signature, signature)
+        if not is_valid:
+            return Response(
+                {"detail": "Invalid payment signature."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response(
+            {"verified": True, "message": "Payment signature verified successfully."},
+            status=status.HTTP_200_OK,
+        )
