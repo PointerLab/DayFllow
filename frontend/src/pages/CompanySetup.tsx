@@ -24,6 +24,7 @@ const CompanySetup: React.FC = () => {
   const [rolesInput, setRolesInput] = useState("EMP\nINT\nHR");
   const [employmentTypesInput, setEmploymentTypesInput] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
+  const [logoFileName, setLogoFileName] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -90,7 +91,7 @@ const CompanySetup: React.FC = () => {
     if (!departments.length || !roles.length || !employmentTypes.length || !trimmedLogoUrl) {
       toast({
         title: "All fields are required",
-        description: "Enter all lists and add your company logo URL.",
+        description: "Enter all lists and upload your company logo.",
         variant: "destructive",
       });
       return;
@@ -120,6 +121,48 @@ const CompanySetup: React.FC = () => {
     }
   };
 
+  const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const maxBytes = 2 * 1024 * 1024;
+    if (file.size > maxBytes) {
+      toast({
+        title: "File too large",
+        description: "Please upload an image under 2 MB.",
+        variant: "destructive",
+      });
+      event.target.value = "";
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload a valid image file.",
+        variant: "destructive",
+      });
+      event.target.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = typeof reader.result === "string" ? reader.result : "";
+      setLogoUrl(result);
+      setLogoFileName(file.name);
+    };
+    reader.onerror = () => {
+      toast({
+        title: "Upload failed",
+        description: "Unable to read the selected image. Please try another file.",
+        variant: "destructive",
+      });
+      event.target.value = "";
+    };
+    reader.readAsDataURL(file);
+  };
+
   if (!isAuthenticated || !isAdmin) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
@@ -139,19 +182,28 @@ const CompanySetup: React.FC = () => {
           <form onSubmit={handleSubmit} className="mt-6 space-y-5">
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                Company Logo URL
+                Company Logo (max 2 MB)
               </label>
               <input
-                type="url"
-                value={logoUrl}
-                onChange={(event) => setLogoUrl(event.target.value)}
+                type="file"
+                accept="image/*"
+                onChange={handleLogoChange}
                 className="w-full rounded-xl border border-input bg-background px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="https://yourcompany.com/logo.png"
                 disabled={isLoading}
               />
               <p className="mt-1 text-xs text-muted-foreground">
-                Use a public image URL so salary slips can render the logo.
+                Upload a logo image file from your device. Maximum size: 2 MB.
               </p>
+              {logoFileName ? (
+                <p className="mt-1 text-xs text-muted-foreground">Selected: {logoFileName}</p>
+              ) : null}
+              {logoUrl ? (
+                <img
+                  src={logoUrl}
+                  alt="Company logo preview"
+                  className="mt-3 h-16 w-auto rounded border border-border object-contain bg-background p-1"
+                />
+              ) : null}
             </div>
 
             <div>
