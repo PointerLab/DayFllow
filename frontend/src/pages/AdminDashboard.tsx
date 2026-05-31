@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchAdminDashboard } from "@/api/dashboard";
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRealtimeRefresh } from "@/hooks/useRealtimeRefresh";
 
 interface AdminDashboardStats {
   total_employees: number;
@@ -24,29 +25,30 @@ const AdminDashboard: React.FC = () => {
   const isAdmin = user?.role === "ADMIN" || user?.role === "HR";
   const employeesPagePath = user?.role === "ADMIN" ? "/employees/admin" : "/employees";
 
-  useEffect(() => {
-    let mounted = true;
-    const load = async () => {
-      try {
-        const data = await fetchAdminDashboard();
-        if (mounted) {
-          setStats(data);
-        }
-      } catch (err) {
-        if (mounted) {
-          setError(err instanceof Error ? err.message : "Failed to load dashboard.");
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    };
-    load();
-    return () => {
-      mounted = false;
-    };
+  const loadDashboard = useCallback(async (showLoader = false) => {
+    if (showLoader) {
+      setLoading(true);
+    }
+    try {
+      const data = await fetchAdminDashboard();
+      setStats(data);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load dashboard.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void loadDashboard(true);
+  }, [loadDashboard]);
+
+  useRealtimeRefresh(() => {
+    if (isAdmin) {
+      void loadDashboard(false);
+    }
+  });
 
   if (!isAdmin) {
     return (

@@ -230,3 +230,96 @@ class CompanyConfigAPIView(generics.GenericAPIView):
         response_data = self.get_serializer(config).data
         response_data["logo_url"] = refreshed_logo.logo_url if refreshed_logo else ""
         return Response(response_data, status=status.HTTP_200_OK)
+
+
+PLAN_AMOUNTS = {
+    "starter": 49900,
+    "enterprise": 149900,
+}
+
+
+class RazorpayCreateOrderAPIView(APIView):
+    permission_classes = (AllowAny,)
+
+    def post(self, request):
+        plan = request.data.get("plan")
+        amount = PLAN_AMOUNTS.get(plan)
+        if not amount:
+            return Response(
+                {"detail": "Plan must be either starter or enterprise."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        payload = {
+            "amount": amount,
+            "currency": "INR",
+            "receipt": f"dayflow_{plan}_{int(datetime.now().timestamp())}",
+            "payment_capture": 1,
+        }
+        credentials = f"{settings.RAZORPAY_KEY_ID}:{settings.RAZORPAY_KEY_SECRET}".encode()
+        encoded_credentials = base64.b64encode(credentials).decode()
+        razorpay_request = urllib_request.Request(
+            "https://api.razorpay.com/v1/orders",
+            data=json.dumps(payload).encode(),
+            headers={
+                "Authorization": f"Basic {encoded_credentials}",
+                "Content-Type": "application/json",
+            },
+            method="POST",
+        )
+
+        try:
+            with urllib_request.urlopen(razorpay_request, timeout=15) as response:
+                order = json.loads(response.read().decode())
+        except error.HTTPError as exc:
+            detail = exc.read().decode() or "Unable to create payment order."
+            return Response({"detail": detail}, status=status.HTTP_502_BAD_GATEWAY)
+        except error.URLError:
+            return Response(
+                {"detail": "Payment service is unavailable."},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        return Response(
+            {
+                "key_id": settings.RAZORPAY_KEY_ID,
+                "plan": plan,
+                "amount": amount,
+                "currency": "INR",
+                "order_id": order.get("id"),
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class RazorpayVerifyPaymentAPIView(APIView):
+    permission_classes = (AllowAny,)
+
+    def post(self, request):
+        order_id = request.data.get("razorpay_order_id", "")
+        payment_id = request.data.get("razorpay_payment_id", "")
+        signature = request.data.get("razorpay_signature", "")
+
+        if not order_id or not payment_id or not signature:
+            return Response(
+                {"detail": "Payment verification details are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        message = f"{order_id}|{payment_id}".encode()
+        expected_signature = hmac.new(
+            settings.RAZORPAY_KEY_SECRET.encode(),
+            message,
+            hashlib.sha256,
+        ).hexdigest()
+
+        if not hmac.compare_digest(expected_signature, signature):
+            return Response(
+                {"detail": "Invalid payment signature."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response(
+            {"message": "Payment verified successfully."},
+            status=status.HTTP_200_OK,
+        )

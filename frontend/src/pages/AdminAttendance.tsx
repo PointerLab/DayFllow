@@ -3,6 +3,7 @@ import { Header } from '@/components/layout/Header';
 import { AvatarWithBadge } from '@/components/Avatar';
 import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { fetchAllAttendance } from '@/api/attendance';
+import { REALTIME_DATA_CHANGED_EVENT } from '@/hooks/useRealtimeUpdates';
 
 interface AttendanceRecord {
   id: number;
@@ -98,14 +99,19 @@ const AdminAttendance: React.FC = () => {
     const handleWindowFocus = () => {
       loadAttendance(false);
     };
+    const handleRealtimeRefresh = () => {
+      loadAttendance(false);
+    };
 
     window.addEventListener('focus', handleWindowFocus);
+    window.addEventListener(REALTIME_DATA_CHANGED_EVENT, handleRealtimeRefresh);
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       isMounted = false;
       window.clearInterval(intervalId);
       window.removeEventListener('focus', handleWindowFocus);
+      window.removeEventListener(REALTIME_DATA_CHANGED_EVENT, handleRealtimeRefresh);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);

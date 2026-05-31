@@ -3,6 +3,7 @@ import { Header } from '@/components/layout/Header';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Plus, X, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh';
 import {
   applyLeaveRequest,
   fetchMyLeaves,
@@ -61,6 +62,10 @@ const EmployeeLeaves: React.FC = () => {
   useEffect(() => {
     loadRequests();
   }, []);
+
+  useRealtimeRefresh(() => {
+    void loadRequests();
+  });
 
   const handleSubmit = async () => {
     if (!newRequest.startDate || !newRequest.endDate || !newRequest.reason.trim()) {

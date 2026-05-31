@@ -1,18 +1,46 @@
 const BASE_URL = "/api";
 
-const getAuthHeaders = () => {
+export const getAuthToken = () => {
   const raw = localStorage.getItem("dayflow_auth_tokens");
   if (!raw) {
-    return {};
+    return "";
   }
 
   try {
     const tokens = JSON.parse(raw);
     if (tokens?.access) {
-      return { Authorization: `Bearer ${tokens.access}` };
+      return tokens.access as string;
     }
   } catch {
-    return {};
+    return "";
+  }
+
+  return "";
+};
+
+export const getRealtimeWebSocketUrl = () => {
+  const token = getAuthToken();
+  if (!token) {
+    return "";
+  }
+
+  const configuredUrl = import.meta.env.VITE_WS_URL as string | undefined;
+  const url = new URL(configuredUrl || "/ws/updates/", window.location.href);
+
+  if (url.protocol === "http:") {
+    url.protocol = "ws:";
+  } else if (url.protocol === "https:") {
+    url.protocol = "wss:";
+  }
+
+  url.searchParams.set("token", token);
+  return url.toString();
+};
+
+const getAuthHeaders = () => {
+  const accessToken = getAuthToken();
+  if (accessToken) {
+    return { Authorization: `Bearer ${accessToken}` };
   }
 
   return {};

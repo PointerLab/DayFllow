@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/layout/Header";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useRealtimeRefresh } from "@/hooks/useRealtimeRefresh";
 import { fetchEmployees } from "@/api/employees";
 import {
   creditPayroll,
@@ -184,6 +185,14 @@ const Payroll: React.FC = () => {
       setCurrency(currentSalary.currency || "INR");
     }
   }, [selectedEmployee, salaryRecordByEmployeeId]);
+
+  useRealtimeRefresh(() => {
+    if (isManager) {
+      void loadEmployees();
+    }
+    void loadSalaryRecords();
+    void loadPayrollRecords();
+  });
 
   const handleSaveSalary = async (event: React.FormEvent) => {
     event.preventDefault();

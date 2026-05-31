@@ -5,9 +5,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { RealtimeSync } from "@/components/RealtimeSync";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import PlanSelection from "./pages/PlanSelection";
 import Employees from "./pages/Employees";
 import EmployeesAdmin from "./pages/EmployeesAdmin";
 import CreateEmployee from "./pages/CreateEmployee";
@@ -28,6 +30,7 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
+      <RealtimeSync />
       <TooltipProvider>
         <Toaster />
         <Sonner />

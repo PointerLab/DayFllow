@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Header } from '@/components/layout/Header';
 import { ChevronLeft, ChevronRight, Calendar, Check, Clock } from 'lucide-react';
 import { fetchMyAttendance, type AttendanceRecord } from '@/api/attendance';
+import { REALTIME_DATA_CHANGED_EVENT } from '@/hooks/useRealtimeUpdates';
 
 const HOURS_PER_DAY = 8;
 
@@ -61,8 +62,14 @@ const EmployeeAttendance: React.FC = () => {
     };
 
     loadAttendance();
+    const handleRealtimeRefresh = () => {
+      loadAttendance();
+    };
+    window.addEventListener(REALTIME_DATA_CHANGED_EVENT, handleRealtimeRefresh);
+
     return () => {
       isMounted = false;
+      window.removeEventListener(REALTIME_DATA_CHANGED_EVENT, handleRealtimeRefresh);
     };
   }, []);
 

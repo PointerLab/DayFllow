@@ -5,6 +5,7 @@ import {
   type DashboardNotificationItem,
 } from "@/api/dashboard";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { REALTIME_DATA_CHANGED_EVENT } from "@/hooks/useRealtimeUpdates";
 
 const toneClasses: Record<DashboardNotificationItem["tone"], string> = {
   info: "bg-blue-100 text-blue-700",
@@ -41,6 +42,10 @@ export const NotificationBell: React.FC = () => {
     };
 
     load();
+    window.addEventListener(REALTIME_DATA_CHANGED_EVENT, load);
+    return () => {
+      window.removeEventListener(REALTIME_DATA_CHANGED_EVENT, load);
+    };
   }, [open]);
 
   const unreadCount = useMemo(

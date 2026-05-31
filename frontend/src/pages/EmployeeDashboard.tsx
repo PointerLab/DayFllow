@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { fetchEmployeeDashboard } from "@/api/dashboard";
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useRealtimeRefresh } from "@/hooks/useRealtimeRefresh";
 
 interface EmployeeDashboardStats {
   today_status: string;
@@ -27,29 +28,28 @@ const EmployeeDashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    let mounted = true;
-    const load = async () => {
-      try {
-        const data = await fetchEmployeeDashboard();
-        if (mounted) {
-          setStats(data);
-        }
-      } catch (err) {
-        if (mounted) {
-          setError(err instanceof Error ? err.message : "Failed to load dashboard.");
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    };
-    load();
-    return () => {
-      mounted = false;
-    };
+  const loadDashboard = useCallback(async (showLoader = false) => {
+    if (showLoader) {
+      setLoading(true);
+    }
+    try {
+      const data = await fetchEmployeeDashboard();
+      setStats(data);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load dashboard.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void loadDashboard(true);
+  }, [loadDashboard]);
+
+  useRealtimeRefresh(() => {
+    void loadDashboard(false);
+  });
 
   return (
     <div className="p-6 space-y-6">

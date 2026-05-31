@@ -10,6 +10,7 @@ import {
   type AttendanceRecord,
 } from '@/api/attendance';
 import { useToast } from '@/hooks/use-toast';
+import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh';
 
 interface HeaderProps {
   breadcrumb: string;
@@ -107,6 +108,12 @@ export const Header: React.FC<HeaderProps> = ({ breadcrumb, subtitle }) => {
     const todayRecord = records.find((record) => record.date === today) ?? null;
     setTodayAttendance(todayRecord);
   };
+
+  useRealtimeRefresh(() => {
+    if (!isAdmin) {
+      void refreshTodayAttendance();
+    }
+  });
 
   const handleAttendanceAction = async () => {
     if (isAttendanceActionLoading || isAttendanceLoading) return;

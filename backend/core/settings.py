@@ -34,12 +34,18 @@ RAZORPAY_KEY_SECRET = "BbwMnLgv3liaosjUbw5uXBO2"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DJANGO_DEBUG", "True").lower() == "true"
 
-ALLOWED_HOSTS = [host for host in os.getenv("DJANGO_ALLOWED_HOSTS", "").split(",") if host]
+configured_allowed_hosts = [
+    host for host in os.getenv("DJANGO_ALLOWED_HOSTS", "").split(",") if host
+]
+ALLOWED_HOSTS = configured_allowed_hosts or (
+    ["localhost", "127.0.0.1", "[::1]"] if DEBUG else []
+)
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -53,6 +59,7 @@ INSTALLED_APPS = [
     'leave',
     'dashboard',
     'payroll',
+    'realtime',
 ]
 
 
@@ -90,6 +97,13 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'core.wsgi.application'
+ASGI_APPLICATION = 'core.asgi.application'
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    },
+}
 
 
 # Database

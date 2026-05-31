@@ -4,6 +4,7 @@ import { AvatarWithBadge } from '@/components/Avatar';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Check, X, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh';
 import {
   fetchAllLeaves,
   reviewLeaveRequest,
@@ -50,6 +51,10 @@ const AdminLeaves: React.FC = () => {
   useEffect(() => {
     loadRequests();
   }, []);
+
+  useRealtimeRefresh(() => {
+    void loadRequests();
+  });
 
   const filteredRequests = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();

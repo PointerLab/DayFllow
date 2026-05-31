@@ -4,6 +4,7 @@ import { AvatarWithBadge } from '@/components/Avatar';
 import { Search, Download, MoreVertical, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { exportEmployees, fetchEmployees } from '@/api/employees';
+import { REALTIME_DATA_CHANGED_EVENT } from '@/hooks/useRealtimeUpdates';
 
 interface Employee {
   id: number;
@@ -53,8 +54,14 @@ const EmployeesAdmin: React.FC = () => {
     };
 
     loadEmployees();
+    const handleRealtimeRefresh = () => {
+      loadEmployees();
+    };
+    window.addEventListener(REALTIME_DATA_CHANGED_EVENT, handleRealtimeRefresh);
+
     return () => {
       isMounted = false;
+      window.removeEventListener(REALTIME_DATA_CHANGED_EVENT, handleRealtimeRefresh);
     };
   }, [location.state?.refreshKey]);
 

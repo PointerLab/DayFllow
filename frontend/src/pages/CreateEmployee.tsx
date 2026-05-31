@@ -5,6 +5,10 @@ import { createEmployee } from '@/api/employees';
 import { fetchCompanyConfig } from '@/api/companyConfig';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import {
+  REALTIME_DATA_CHANGED_EVENT,
+  type RealtimeDataChangedEvent,
+} from '@/hooks/useRealtimeUpdates';
 
 const CreateEmployee: React.FC = () => {
   const [firstName, setFirstName] = useState('');
@@ -70,8 +74,18 @@ const CreateEmployee: React.FC = () => {
     };
 
     loadCompanyConfig();
+    const handleRealtimeRefresh = (event: Event) => {
+      const detail = (event as CustomEvent<RealtimeDataChangedEvent>).detail;
+      if (!['accounts.CompanyConfig', 'accounts.CompanyLogo'].includes(detail?.model)) {
+        return;
+      }
+      loadCompanyConfig();
+    };
+    window.addEventListener(REALTIME_DATA_CHANGED_EVENT, handleRealtimeRefresh);
+
     return () => {
       mounted = false;
+      window.removeEventListener(REALTIME_DATA_CHANGED_EVENT, handleRealtimeRefresh);
     };
   }, [toast]);
 
