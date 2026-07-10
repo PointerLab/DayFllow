@@ -34,9 +34,22 @@ RAZORPAY_KEY_SECRET = "BbwMnLgv3liaosjUbw5uXBO2"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DJANGO_DEBUG", "True").lower() == "true"
 
-configured_allowed_hosts = [
-    host for host in os.getenv("DJANGO_ALLOWED_HOSTS", "").split(",") if host
-]
+raw_hosts = os.getenv("DJANGO_ALLOWED_HOSTS", "").split(",")
+configured_allowed_hosts = []
+for host in raw_hosts:
+    host = host.strip()
+    if not host:
+        continue
+    # Strip protocol prefix if present
+    if "://" in host:
+        host = host.split("://", 1)[1]
+    # Strip port or path if present
+    host = host.split("/", 1)[0].split(":", 1)[0]
+    # Standardize subdomain wildcard *.onrender.com to .onrender.com
+    if host.startswith("*."):
+        host = "." + host[2:]
+    configured_allowed_hosts.append(host)
+
 ALLOWED_HOSTS = configured_allowed_hosts or (
     ["localhost", "127.0.0.1", "[::1]"] if DEBUG else []
 )
