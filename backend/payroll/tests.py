@@ -104,3 +104,56 @@ class PayrollFlowTests(APITestCase):
         self.assertTrue(
             any(item["id"] == f"salary-{payroll.id}" for item in response.data["items"])
         )
+
+    def test_add_expense_and_payroll_adjustment(self):
+        salary = EmployeeSalary.objects.create(
+            employee=self.employee,
+            monthly_salary=Decimal("30000.00"),
+            currency="INR",
+            set_by=self.admin,
+            updated_by=self.admin,
+        )
+
+        self.client.force_authenticate(user=self.employee)
+        response = self.client.post(
+            reverse("payroll-add-expense"),
+            {"amount": "5000.00"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        salary.refresh_from_db()
+        self.assertEqual(salary.expense, Decimal("5000.00"))
+        self.assertEqual(salary.outstanding, Decimal("5000.00"))
+
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.post(
+            reverse("payroll-add-expense"),
+            {"amount": "1200.50", "employee_id": self.employee.id},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        salary.refresh_from_db()
+        self.assertEqual(salary.expense, Decimal("6200.50"))
+        self.assertEqual(salary.outstanding, Decimal("6200.50"))
+
+        Attendance.objects.create(user=self.employee, date=date(2026, 2, 1), status="PRESENT")
+        run_response = self.client.post(
+            reverse("payroll-run"),
+            {"month": "2026-02", "employee_id": self.employee.id},
+            format="json",
+        )
+        self.assertEqual(run_response.status_code, status.HTTP_200_OK)
+
+        payroll = PayrollRecord.objects.get(employee=self.employee, month=date(2026, 2, 1))
+        self.assertEqual(payroll.expense_amount, Decimal("6200.50"))
+        self.assertEqual(payroll.net_salary, Decimal("7271.93"))
+
+        credit_response = self.client.post(
+            reverse("payroll-credit", kwargs={"payroll_id": payroll.id}),
+            {},
+            format="json",
+        )
+        self.assertEqual(credit_response.status_code, status.HTTP_200_OK)
+        salary.refresh_from_db()
+        self.assertEqual(salary.outstanding, Decimal("0.00"))
+

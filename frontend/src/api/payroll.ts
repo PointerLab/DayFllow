@@ -7,7 +7,11 @@ export interface SalaryRecord {
   employee_role: "ADMIN" | "HR" | "EMP" | "INT";
   monthly_salary: string;
   currency: string;
+  expense: string;
+  outstanding: string;
+  adjusted_salary: string;
   updated_at: string;
+
 }
 
 export interface PayrollRecord {
@@ -27,9 +31,11 @@ export interface PayrollRecord {
   absent_days: number;
   payable_days: string;
   designated_salary: string;
+  expense_amount: string;
   net_salary: string;
   created_at: string;
   credited_at: string | null;
+
 }
 
 export interface PayrollSlip {
@@ -56,9 +62,11 @@ export interface PayrollSlip {
   absent_days: number;
   payable_days: string;
   designated_salary: string;
+  expense_amount: string;
   net_salary: string;
   created_at: string;
   credited_at: string | null;
+
 }
 
 export interface PayrollRunResult {
@@ -123,4 +131,15 @@ export const creditPayroll = async (payrollId: number) => {
 export const fetchPayrollSlip = async (payrollId: number) => {
   return apiGet(`/payroll/slips/${payrollId}/`) as Promise<PayrollSlip>;
 };
+
+export const addExpense = async (payload: {
+  amount: string;
+  employee_id?: number;
+}) => {
+  return apiPost("/payroll/salaries/add-expense/", payload) as Promise<{
+    message: string;
+    salary: SalaryRecord;
+  }>;
+};
+
 

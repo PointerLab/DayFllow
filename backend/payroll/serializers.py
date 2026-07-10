@@ -35,6 +35,8 @@ class EmployeeSalarySerializer(serializers.ModelSerializer):
     employee_name = serializers.SerializerMethodField()
     employee_role = serializers.CharField(source="employee.role", read_only=True)
 
+    adjusted_salary = serializers.SerializerMethodField()
+
     class Meta:
         model = EmployeeSalary
         fields = (
@@ -44,8 +46,15 @@ class EmployeeSalarySerializer(serializers.ModelSerializer):
             "employee_role",
             "monthly_salary",
             "currency",
+            "expense",
+            "outstanding",
+            "adjusted_salary",
             "updated_at",
         )
+
+    def get_adjusted_salary(self, obj):
+        return obj.monthly_salary + obj.outstanding
+
 
     def get_employee_name(self, obj):
         full_name = f"{obj.employee.first_name} {obj.employee.last_name}".strip()
@@ -104,10 +113,12 @@ class PayrollRecordSerializer(serializers.ModelSerializer):
             "absent_days",
             "payable_days",
             "designated_salary",
+            "expense_amount",
             "net_salary",
             "created_at",
             "credited_at",
         )
+
 
     def get_employee_name(self, obj):
         full_name = f"{obj.employee.first_name} {obj.employee.last_name}".strip()
@@ -141,10 +152,12 @@ class PayrollSlipSerializer(serializers.ModelSerializer):
             "absent_days",
             "payable_days",
             "designated_salary",
+            "expense_amount",
             "net_salary",
             "created_at",
             "credited_at",
         )
+
 
     def get_employee(self, obj):
         full_name = f"{obj.employee.first_name} {obj.employee.last_name}".strip()

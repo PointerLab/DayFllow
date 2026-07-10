@@ -14,6 +14,9 @@ class EmployeeSalary(models.Model):
     )
     monthly_salary = models.DecimalField(max_digits=12, decimal_places=2)
     currency = models.CharField(max_length=10, default="INR")
+    expense = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
+    outstanding = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
+
     set_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -68,7 +71,9 @@ class PayrollRecord(models.Model):
     payable_days = models.DecimalField(max_digits=6, decimal_places=2, default=Decimal("0.00"))
 
     designated_salary = models.DecimalField(max_digits=12, decimal_places=2)
+    expense_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
     net_salary = models.DecimalField(max_digits=12, decimal_places=2)
+
 
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="PENDING")
     generated_by = models.ForeignKey(

@@ -11,10 +11,12 @@ import {
   fetchSalaryRecords,
   runPayroll,
   upsertSalary,
+  addExpense,
   type PayrollRecord,
   type PayrollSlip,
   type SalaryRecord,
 } from "@/api/payroll";
+
 
 interface EmployeeOption {
   id: number;
@@ -69,10 +71,12 @@ const Payroll: React.FC = () => {
   const [runMonth, setRunMonth] = useState(getCurrentMonth());
   const [runEmployeeId, setRunEmployeeId] = useState("all");
 
-  const [recordMonth, setRecordMonth] = useState(getCurrentMonth());
-  const [recordStatus, setRecordStatus] = useState<"ALL" | "PENDING" | "PAID">("ALL");
+  const [expenseEmployeeId, setExpenseEmployeeId] = useState("");
+  const [expenseAmountInput, setExpenseAmountInput] = useState("");
+  const [addingExpense, setAddingExpense] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
+
 
   const selectedEmployee = useMemo(
     () => employees.find((employee) => String(employee.id) === selectedEmployeeId),
@@ -194,7 +198,52 @@ const Payroll: React.FC = () => {
     void loadPayrollRecords();
   });
 
+  const handleAddExpense = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!expenseAmountInput.trim()) {
+      toast({
+        title: "Missing amount",
+        description: "Enter an expense amount.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const amount = Number(expenseAmountInput);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      toast({
+        title: "Invalid amount",
+        description: "Expense amount must be a positive number.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setAddingExpense(true);
+    try {
+      await addExpense({
+        amount: expenseAmountInput,
+        employee_id: isManager && expenseEmployeeId ? Number(expenseEmployeeId) : undefined,
+      });
+      toast({
+        title: "Expense added",
+        description: "Expense has been recorded and outstanding salary updated.",
+      });
+      setExpenseAmountInput("");
+      await loadSalaryRecords();
+    } catch (err) {
+      toast({
+        title: "Failed to add expense",
+        description: err instanceof Error ? err.message : "Try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setAddingExpense(false);
+    }
+  };
+
   const handleSaveSalary = async (event: React.FormEvent) => {
+
     event.preventDefault();
     if (!selectedEmployeeId || !salaryAmount.trim()) {
       toast({
@@ -336,8 +385,9 @@ const Payroll: React.FC = () => {
         )}
 
         {isManager && (
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
             <div className="rounded-xl border border-border bg-card p-5">
+
               <h2 className="text-lg font-semibold text-foreground">Set Designated Salary</h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 Admin or HR can assign/update monthly salary for any employee.
@@ -398,6 +448,56 @@ const Payroll: React.FC = () => {
             </div>
 
             <div className="rounded-xl border border-border bg-card p-5">
+              <h2 className="text-lg font-semibold text-foreground">Add Expense</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Add business expenses or outstanding allowances for an employee.
+              </p>
+
+              <form onSubmit={handleAddExpense} className="mt-4 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">Employee</label>
+                  <select
+                    value={expenseEmployeeId}
+                    onChange={(event) => setExpenseEmployeeId(event.target.value)}
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+                    disabled={loadingInitial}
+                    required
+                  >
+                    <option value="">Select employee</option>
+                    {employees.map((employee) => (
+                      <option key={employee.id} value={employee.id}>
+                        {employeeDisplayName(employee)} ({employee.login_id})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">Expense Amount</label>
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={expenseAmountInput}
+                    onChange={(event) => setExpenseAmountInput(event.target.value)}
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+                    placeholder="2500"
+                    required
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={addingExpense}
+                  className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                >
+                  {addingExpense ? "Adding..." : "Add Expense"}
+                </button>
+              </form>
+            </div>
+
+            <div className="rounded-xl border border-border bg-card p-5">
+
               <h2 className="text-lg font-semibold text-foreground">Run Payroll</h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 Generate payroll from attendance and keep status as pending until credited.
@@ -450,14 +550,17 @@ const Payroll: React.FC = () => {
                   <tr>
                     <th className="px-3 py-2 text-left text-sm font-semibold text-foreground">Employee</th>
                     <th className="px-3 py-2 text-left text-sm font-semibold text-foreground">Role</th>
-                    <th className="px-3 py-2 text-left text-sm font-semibold text-foreground">Salary</th>
+                    <th className="px-3 py-2 text-left text-sm font-semibold text-foreground">Designated Salary</th>
+                    <th className="px-3 py-2 text-left text-sm font-semibold text-foreground">Expense</th>
+                    <th className="px-3 py-2 text-left text-sm font-semibold text-foreground">Outstanding</th>
+                    <th className="px-3 py-2 text-left text-sm font-semibold text-foreground">Adjusted Salary</th>
                     <th className="px-3 py-2 text-left text-sm font-semibold text-foreground">Updated</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {salaryRecords.length === 0 ? (
                     <tr>
-                      <td className="px-3 py-8 text-center text-sm text-muted-foreground" colSpan={4}>
+                      <td className="px-3 py-8 text-center text-sm text-muted-foreground" colSpan={7}>
                         No salaries assigned yet.
                       </td>
                     </tr>
@@ -472,6 +575,15 @@ const Payroll: React.FC = () => {
                           {formatCurrency(salary.monthly_salary, salary.currency)}
                         </td>
                         <td className="px-3 py-3 text-sm text-muted-foreground">
+                          {formatCurrency(salary.expense || "0.00", salary.currency)}
+                        </td>
+                        <td className="px-3 py-3 text-sm text-amber-600 dark:text-amber-400 font-medium">
+                          {formatCurrency(salary.outstanding || "0.00", salary.currency)}
+                        </td>
+                        <td className="px-3 py-3 text-sm text-green-600 dark:text-green-400 font-bold">
+                          {formatCurrency(salary.adjusted_salary || salary.monthly_salary, salary.currency)}
+                        </td>
+                        <td className="px-3 py-3 text-sm text-muted-foreground">
                           {new Date(salary.updated_at).toLocaleString()}
                         </td>
                       </tr>
@@ -483,18 +595,80 @@ const Payroll: React.FC = () => {
           </div>
         )}
 
+
         {!isManager && (
-          <div className="rounded-xl border border-border bg-card p-5">
-            <h2 className="text-lg font-semibold text-foreground">Your Designated Salary</h2>
-            {salaryRecords[0] ? (
-              <p className="mt-2 text-3xl font-bold text-foreground">
-                {formatCurrency(salaryRecords[0].monthly_salary, salaryRecords[0].currency)}
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="rounded-xl border border-border bg-card p-5">
+                <p className="text-sm font-medium text-muted-foreground">Designated Salary</p>
+                {salaryRecords[0] ? (
+                  <p className="mt-2 text-2xl font-bold text-foreground">
+                    {formatCurrency(salaryRecords[0].monthly_salary, salaryRecords[0].currency)}
+                  </p>
+                ) : (
+                  <p className="mt-2 text-sm text-muted-foreground">Not configured</p>
+                )}
+              </div>
+              <div className="rounded-xl border border-border bg-card p-5">
+                <p className="text-sm font-medium text-muted-foreground">Total Expenses</p>
+                {salaryRecords[0] ? (
+                  <p className="mt-2 text-2xl font-bold text-foreground text-blue-600 dark:text-blue-400">
+                    {formatCurrency(salaryRecords[0].expense || "0.00", salaryRecords[0].currency)}
+                  </p>
+                ) : (
+                  <p className="mt-2 text-sm text-muted-foreground">0.00</p>
+                )}
+              </div>
+              <div className="rounded-xl border border-border bg-card p-5">
+                <p className="text-sm font-medium text-muted-foreground">Outstanding Expenses</p>
+                {salaryRecords[0] ? (
+                  <p className="mt-2 text-2xl font-bold text-foreground text-amber-600 dark:text-amber-400">
+                    {formatCurrency(salaryRecords[0].outstanding || "0.00", salaryRecords[0].currency)}
+                  </p>
+                ) : (
+                  <p className="mt-2 text-sm text-muted-foreground">0.00</p>
+                )}
+              </div>
+              <div className="rounded-xl border border-border bg-card p-5">
+                <p className="text-sm font-medium text-muted-foreground">Adjusted Salary Payout</p>
+                {salaryRecords[0] ? (
+                  <p className="mt-2 text-2xl font-bold text-foreground text-green-600 dark:text-green-400">
+                    {formatCurrency(salaryRecords[0].adjusted_salary || salaryRecords[0].monthly_salary, salaryRecords[0].currency)}
+                  </p>
+                ) : (
+                  <p className="mt-2 text-sm text-muted-foreground">Not configured</p>
+                )}
+              </div>
+            </div>
+
+            <div className="max-w-md rounded-xl border border-border bg-card p-5">
+              <h3 className="text-lg font-semibold text-foreground">Submit Business Expense Claim</h3>
+              <p className="text-sm text-muted-foreground mt-1 mb-4">
+                Add expenses incurred for business purposes to get reimbursed in your next salary.
               </p>
-            ) : (
-              <p className="mt-2 text-sm text-muted-foreground">
-                Salary is not configured yet. Contact Admin/HR.
-              </p>
-            )}
+              <form onSubmit={handleAddExpense} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">Expense Amount</label>
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={expenseAmountInput}
+                    onChange={(event) => setExpenseAmountInput(event.target.value)}
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
+                    placeholder="Enter amount"
+                    required
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={addingExpense}
+                  className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                >
+                  {addingExpense ? "Submitting..." : "Submit Expense"}
+                </button>
+              </form>
+            </div>
           </div>
         )}
 
@@ -699,12 +873,21 @@ const Payroll: React.FC = () => {
                         {selectedSlip.payable_days}
                       </td>
                     </tr>
+                    {Number(selectedSlip.expense_amount) > 0 && (
+                      <tr>
+                        <td className="py-2 text-muted-foreground">Reimbursed Expenses</td>
+                        <td className="py-2 text-right font-medium text-foreground text-green-600 dark:text-green-400">
+                          {formatCurrency(selectedSlip.expense_amount)}
+                        </td>
+                      </tr>
+                    )}
                     <tr>
                       <td className="py-2 text-muted-foreground">Net Salary</td>
                       <td className="py-2 text-right text-lg font-bold text-foreground">
                         {formatCurrency(selectedSlip.net_salary)}
                       </td>
                     </tr>
+
                   </tbody>
                 </table>
               </div>

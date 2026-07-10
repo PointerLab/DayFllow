@@ -63,7 +63,10 @@ def _compute_payroll_for_employee(employee, salary, payroll_month):
     payable_days = Decimal(attendance["present_days"]) + (Decimal(attendance["half_days"]) * Decimal("0.5"))
 
     daily_rate = Decimal(salary.monthly_salary) / Decimal(days_in_month)
-    net_salary = quantize_currency(daily_rate * payable_days)
+    base_net_salary = daily_rate * payable_days
+
+    expense_to_pay = Decimal(salary.outstanding)
+    net_salary = quantize_currency(base_net_salary + expense_to_pay)
 
     return {
         "month": payroll_month,
@@ -75,8 +78,10 @@ def _compute_payroll_for_employee(employee, salary, payroll_month):
         "absent_days": attendance["absent_days"],
         "payable_days": quantize_currency(payable_days),
         "designated_salary": quantize_currency(Decimal(salary.monthly_salary)),
+        "expense_amount": expense_to_pay,
         "net_salary": net_salary,
     }
+
 
 
 def _get_accessible_payroll(user, payroll_id):
@@ -285,10 +290,16 @@ class PayrollCreditAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        payroll.status = "PAID"
-        payroll.credited_at = timezone.now()
-        payroll.credited_by = request.user
-        payroll.save(update_fields=["status", "credited_at", "credited_by", "updated_at"])
+        with transaction.atomic():
+            payroll.status = "PAID"
+            payroll.credited_at = timezone.now()
+            payroll.credited_by = request.user
+            payroll.save(update_fields=["status", "credited_at", "credited_by", "updated_at"])
+
+            salary = EmployeeSalary.objects.filter(employee=payroll.employee).first()
+            if salary and payroll.expense_amount > 0:
+                salary.outstanding = max(Decimal("0.00"), salary.outstanding - payroll.expense_amount)
+                salary.save(update_fields=["outstanding", "updated_at"])
 
         return Response(
             {
@@ -297,6 +308,7 @@ class PayrollCreditAPIView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
 
 
 class PayrollSlipAPIView(APIView):
@@ -368,6 +380,7 @@ class PayrollSlipHTMLAPIView(APIView):
       <tr><td>Present Days</td><td>{payroll.present_days}</td></tr>
       <tr><td>Half Days</td><td>{payroll.half_days}</td></tr>
       <tr><td>Payable Days</td><td>{payroll.payable_days}</td></tr>
+      <tr><td>Reimbursed Expenses</td><td>{payroll.expense_amount}</td></tr>
       <tr><td>Net Salary</td><td>{payroll.net_salary}</td></tr>
     </table>
   </div>
@@ -375,3 +388,54 @@ class PayrollSlipHTMLAPIView(APIView):
 </html>
 """
         return HttpResponse(html)
+
+
+class AddExpenseAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        amount_str = request.data.get("amount")
+        if not amount_str:
+            return Response({"detail": "Amount is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            amount = Decimal(str(amount_str))
+            if amount <= 0:
+                raise ValueError()
+        except (ValueError, TypeError):
+            return Response({"detail": "Amount must be a positive number."}, status=status.HTTP_400_BAD_REQUEST)
+
+        employee_id = request.data.get("employee_id")
+        from accounts.models import CustomUser
+        if employee_id:
+            if not _is_payroll_manager(request.user):
+                return Response({"detail": "Permission denied."}, status=status.HTTP_403_FORBIDDEN)
+            employee = CustomUser.objects.filter(id=employee_id, company_name=request.user.company_name).first()
+            if not employee:
+                return Response({"detail": "Employee not found."}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            employee = request.user
+
+        salary, created = EmployeeSalary.objects.get_or_create(
+            employee=employee,
+            defaults={
+                "monthly_salary": Decimal("0.00"),
+                "currency": "INR",
+                "set_by": request.user,
+                "updated_by": request.user,
+            }
+        )
+
+        with transaction.atomic():
+            salary.expense += amount
+            salary.outstanding += amount
+            salary.save(update_fields=["expense", "outstanding", "updated_at"])
+
+        return Response(
+            {
+                "message": "Expense added successfully.",
+                "salary": EmployeeSalarySerializer(salary).data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
