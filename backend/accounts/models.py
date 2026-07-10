@@ -79,6 +79,7 @@ class CompanyConfig(models.Model):
     departments = models.JSONField(default=list, blank=True)
     roles = models.JSONField(default=list, blank=True)
     employment_types = models.JSONField(default=list, blank=True)
+    bypass_attendance = models.BooleanField(default=False)
     created_by = models.ForeignKey(
         CustomUser,
         on_delete=models.SET_NULL,

@@ -172,6 +172,7 @@ class CompanyConfigAPIView(generics.GenericAPIView):
                     "departments": [],
                     "roles": [],
                     "employment_types": [],
+                    "bypass_attendance": False,
                     "logo_url": logo_url,
                     "updated_at": None,
                 },

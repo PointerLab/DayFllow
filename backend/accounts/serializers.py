@@ -90,6 +90,7 @@ class CompanyConfigSerializer(serializers.ModelSerializer):
             "departments",
             "roles",
             "employment_types",
+            "bypass_attendance",
             "updated_at",
         )
         read_only_fields = ("company_name", "updated_at")

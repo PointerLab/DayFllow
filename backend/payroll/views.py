@@ -59,7 +59,21 @@ def _attendance_month_stats(employee, payroll_month):
 
 def _compute_payroll_for_employee(employee, salary, payroll_month):
     days_in_month = calendar.monthrange(payroll_month.year, payroll_month.month)[1]
-    attendance = _attendance_month_stats(employee, payroll_month)
+    
+    from accounts.models import CompanyConfig
+    config = CompanyConfig.objects.filter(company_name=employee.company_name).first()
+    
+    if config and config.bypass_attendance:
+        attendance = {
+            "attendance_entries": days_in_month,
+            "present_days": days_in_month,
+            "half_days": 0,
+            "leave_days": 0,
+            "absent_days": 0,
+        }
+    else:
+        attendance = _attendance_month_stats(employee, payroll_month)
+        
     payable_days = Decimal(attendance["present_days"]) + (Decimal(attendance["half_days"]) * Decimal("0.5"))
 
     daily_rate = Decimal(salary.monthly_salary) / Decimal(days_in_month)
