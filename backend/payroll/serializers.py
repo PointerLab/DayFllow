@@ -53,7 +53,7 @@ class EmployeeSalarySerializer(serializers.ModelSerializer):
         )
 
     def get_adjusted_salary(self, obj):
-        return obj.monthly_salary + obj.outstanding
+        return obj.monthly_salary - obj.outstanding
 
 
     def get_employee_name(self, obj):

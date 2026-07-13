@@ -146,7 +146,7 @@ class PayrollFlowTests(APITestCase):
 
         payroll = PayrollRecord.objects.get(employee=self.employee, month=date(2026, 2, 1))
         self.assertEqual(payroll.expense_amount, Decimal("6200.50"))
-        self.assertEqual(payroll.net_salary, Decimal("7271.93"))
+        self.assertEqual(payroll.net_salary, Decimal("-5129.07"))
 
         credit_response = self.client.post(
             reverse("payroll-credit", kwargs={"payroll_id": payroll.id}),

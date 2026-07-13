@@ -80,7 +80,7 @@ def _compute_payroll_for_employee(employee, salary, payroll_month):
     base_net_salary = daily_rate * payable_days
 
     expense_to_pay = Decimal(salary.outstanding)
-    net_salary = quantize_currency(base_net_salary + expense_to_pay)
+    net_salary = quantize_currency(base_net_salary - expense_to_pay)
 
     return {
         "month": payroll_month,
@@ -198,17 +198,7 @@ class PayrollRunAPIView(APIView):
                 )
 
                 if not created:
-                    if payroll.status == "PAID" and not force_recompute:
-                        output.append(
-                            {
-                                "employee_id": salary.employee.id,
-                                "employee_login_id": salary.employee.login_id,
-                                "status": "skipped",
-                                "reason": "Payroll is already marked as paid.",
-                            }
-                        )
-                        continue
-                    if payroll.status == "PAID" and force_recompute:
+                    if payroll.status == "PAID":
                         payroll.status = "PENDING"
                         payroll.credited_at = None
                         payroll.credited_by = None
@@ -222,6 +212,7 @@ class PayrollRunAPIView(APIView):
                     payroll.absent_days = computed["absent_days"]
                     payroll.payable_days = computed["payable_days"]
                     payroll.designated_salary = computed["designated_salary"]
+                    payroll.expense_amount = computed["expense_amount"]
                     payroll.net_salary = computed["net_salary"]
                     payroll.generated_by = request.user
                     payroll.save()
@@ -401,7 +392,10 @@ class PayrollSlipHTMLAPIView(APIView):
 </body>
 </html>
 """
-        return HttpResponse(html)
+        response = HttpResponse(html)
+        if request.GET.get("download") == "true":
+            response["Content-Disposition"] = f'attachment; filename="salary_slip_{payroll.employee.login_id}_{payroll.month.strftime("%Y-%m")}.html"'
+        return response
 
 
 class AddExpenseAPIView(APIView):
