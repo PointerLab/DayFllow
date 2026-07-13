@@ -157,3 +157,17 @@ def insert_company_user_row(
         )
 
     return table_name
+
+
+def delete_company_user_row(company_name: str, user_id: int) -> str:
+    table_name = build_company_table_name(company_name)
+    quoted_table_name = connection.ops.quote_name(table_name)
+    with connection.cursor() as cursor:
+        try:
+            cursor.execute(
+                f"DELETE FROM {quoted_table_name} WHERE user_id = %s",
+                [user_id]
+            )
+        except Exception:
+            pass
+    return table_name

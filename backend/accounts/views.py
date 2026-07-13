@@ -19,7 +19,11 @@ from .serializers import (
     CompanyConfigSerializer,
 )
 from .models import CustomUser, CompanyConfig, CompanyLogo
-from .company_table_service import ensure_company_table, insert_company_user_row
+from .company_table_service import (
+    ensure_company_table,
+    insert_company_user_row,
+    delete_company_user_row,
+)
 import traceback
 
 
@@ -92,6 +96,26 @@ class EmployeeListAPIView(generics.ListAPIView):
 
     def get_queryset(self):
         return get_employee_queryset_for_request(self.request)
+
+
+class EmployeeDetailAPIView(generics.RetrieveDestroyAPIView):
+    serializer_class = EmployeeListSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def get_queryset(self):
+        return get_employee_queryset_for_request(self.request)
+
+    def perform_destroy(self, instance):
+        from payroll.models import PayrollRecord, EmployeeSalary
+        # Delete related records
+        PayrollRecord.objects.filter(employee=instance).delete()
+        EmployeeSalary.objects.filter(employee=instance).delete()
+
+        # Clean up company table row
+        delete_company_user_row(instance.company_name, instance.id)
+
+        # Delete CustomUser
+        instance.delete()
 
 
 class EmployeeExportAPIView(APIView):
